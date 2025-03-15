@@ -6,7 +6,8 @@ int main (void)
 {
     fprintf (stderr, "Call MyPrintf >>> ");
 
-    MyPrintf ("<WASSSUP>: <%d>, <%d>, <%d>, <%d>, <%d>, <%d>, <%d>", -12, 34, -56, 78, -90, 12, -34);
+    MyPrintf ("\nin arg:  10: <%b>\n",  10);
+    MyPrintf ("in arg: -10: <%b>", -10);
 
     fprintf (stderr, " <<< End of call\n");
 

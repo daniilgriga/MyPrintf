@@ -89,12 +89,27 @@ PercentHandler:
         xor rax, rax
 
         mov al, [rsi]
-        cmp al, 'd'
-        je Decimal
+        mov rax, [jump_table + (rax - 'b')*8]
+        jmp rax
+
+Binary:
+
+        mov r11, [buf_position]
+        movsxd rdx, [rbp + 16 + r12*8]
+
+        call ConvertBin
+
+        inc rsi
+        mov [buf_position], r11
+        jmp next_parcing
+
+Char:
+
 
 Decimal:
+
         mov r11, [buf_position]
-        movsxd rdx, [rbp + 16 + r12*8]                  ; save my life...
+        movsxd rdx, [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
 
         call ConvertHex
 
@@ -140,12 +155,37 @@ FlushBuffer:
 .exit:
         ret
 
+
 ;=============================================================================
 ; Convert Hex to good numbers
 ; Entry:        dl = number
 ;               r11 = buf_pos
 ; Exit:
-; Destr: RBX,                                                                  !!!
+; Destr: RBX,                                                              !!!
+;=============================================================================
+ConvertBin:
+
+        mov rbx, rdx
+        mov rcx, 31                                     ; 31 bites (0th bit - sign)
+
+.convert:
+        mov rax, rbx
+        shr rax, cl
+        and rax, 1
+        mov al, [digits + rax]                          ; ASCII
+        mov [buffer + r11], al
+        inc r11
+        dec rcx
+        jns .convert                                    ; checks SF flag (rcx = -1 -> SF = 1)
+
+        ret
+
+;=============================================================================
+; Convert Hex to good numbers
+; Entry:        dl = number
+;               r11 = buf_pos
+; Exit:
+; Destr: RBX,                                                              !!!
 ;=============================================================================
 ConvertHex:
 
@@ -236,7 +276,7 @@ ASCII_SL_R      equ  0Dh
 
 BUFFER_SIZE     equ  4096                               ; Linux page memory size
 
-digits  db "0123456789"
+digits          db "0123456789"
 
 buffer:
         times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
@@ -244,10 +284,10 @@ buffer:
 buf_position:
         dq  0                                           ; 8 byte (to match the size of the registers)
 
-;jump_table:
-;                        dq Binary
-;                        dq Char
-;                        dq Demical
+jump_table:
+                         dq Binary
+                         dq Char
+                         dq Decimal
 ;  times ('o' - 'd' - 1) dq Error
 ;                        dq Octal
 ;  times ('s' - 'o' - 1) dq Error
