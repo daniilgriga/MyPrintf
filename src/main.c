@@ -1,12 +1,12 @@
 #include <stdio.h>
 
-extern int MyPrintf (const char* a);
+extern int MyPrintf (const char* a, ...);
 
 int main (void)
 {
     fprintf (stderr, "Call MyPrintf >>> ");
 
-    MyPrintf ("<WASSSUP>\n\t");
+    MyPrintf ("<WASSSUP>: %d", 52);
 
     fprintf (stderr, " <<< End of call\n");
 

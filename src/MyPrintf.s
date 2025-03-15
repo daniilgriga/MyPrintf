@@ -18,13 +18,27 @@ MyPrintf:
         push rbx                                        ; save
         push r11                                        ; save
 
-        mov rbx, rdi                                    ; save string address
-        mov rsi, rbx
+        ;push r9                                        ; 6th argument
+        ;push r8                                        ; 5th
+        ;push rcx                                       ; 4th
+        ;push rdx                                       ; 3th
+        push rsi                                        ; 2th
+        push rdi                                        ; 1th
 
-        call StrLen
+        ;mov rbx, rdi                                    ; save string address
+        ;mov rsi, rbx
 
-        call StringParcing
+
+        call Parcing
         call FlushBuffer
+
+
+        pop rdi
+        pop rsi
+        ;pop rdx
+        ;pop rcx
+        ;pop r8
+        ;pop r9
 
         pop r11
         pop rbx
@@ -34,13 +48,20 @@ MyPrintf:
 
         ret
 
+
 ;=============================================================================
-;
+; Parcing string func
 ; Entry:
 ; Exit:
 ; Destr:                                                                   !!!
 ;=============================================================================
-StringParcing:
+Parcing:
+
+        push rbp
+        mov rbp, rsp
+        mov rsi, [rbp + 16]
+
+        call StrLen
 
         mov r11, [buf_position]
 
@@ -53,19 +74,60 @@ StringParcing:
         mov r11, 0
 
 .continue:
+
+        xor r10, r10
+        xor r12, r12
+
+.next:
+        mov al, [rsi]
+
+        cmp al, 0
+        je exit_parcing
+
+        cmp al, '%'
+        je PercentHandler
+
+        call CharCopy
+        inc rsi
+        jmp .next
+
+exit_parcing:
+        mov rsp, rbp
+        pop rbp
+
+        ret
+
+PercentHandler:
+
+        inc r12
+        inc rsi
         xor rax, rax
 
-.copy:
-        cmp rax, rcx
-        je .exit
+        mov al, [rsi]
+        cmp al, 'd'
+        je Decimal
 
-        mov dl, [rbx + rax]
+Decimal:
+        mov r11, [buf_position]
+        mov dl, [rbp + 16 + r12*8]
         mov [buffer + r11], dl
-        inc rax
+        inc si
         inc r11
-        jmp .copy
+        mov [buf_position], r11
+        jmp exit_parcing
 
-.exit:
+
+;=============================================================================
+; Copy one symbol to buffer
+; Entry:        al - symbol
+; Exit:
+; Destr:                                                                   !!!
+;=============================================================================
+CharCopy:
+
+        mov r11, [buf_position]
+        mov [buffer + r11], al
+        inc r11
         mov [buf_position], r11
 
         ret

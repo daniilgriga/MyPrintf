@@ -13,3 +13,8 @@ run:
 
 debug:
 	gdb ./build/program
+
+program:
+	make asm
+	make main
+	make all
