@@ -6,7 +6,7 @@ int main (void)
 {
     fprintf (stderr, "Call MyPrintf >>> ");
 
-    MyPrintf ("<WASSSUP>: %d", 52);
+    MyPrintf ("<WASSSUP>: <%d>", -987654);
 
     fprintf (stderr, " <<< End of call\n");
 

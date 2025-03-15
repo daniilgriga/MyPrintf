@@ -1,8 +1,8 @@
      1                                  
      2                                  ; |=================================================|
-     3                                  ; |                                                 |
-     4                                  ; |                MyPrintf FUNCTION                |
-     5                                  ; |                                                 |
+     3                                  ; | <---------------------------------------------> |
+     4                                  ; | <------------> MyPrintf FUNCTION <------------> |
+     5                                  ; | <---------------------------------------------> |
      6                                  ; |=================================================|
      7                                  
      8                                  section .text
@@ -16,179 +16,251 @@
     16 00000004 4883EC08                        sub rsp, 8                                      ; stack alignment on 16-byte boundary
     17                                  
     18 00000008 53                              push rbx                                        ; save
-    19 00000009 4153                            push r11                                        ; save
-    20                                  
-    21                                          ;push r9                                        ; 6th argument
-    22                                          ;push r8                                        ; 5th
-    23                                          ;push rcx                                       ; 4th
-    24                                          ;push rdx                                       ; 3th
-    25 0000000B 56                              push rsi                                        ; 2th
-    26 0000000C 57                              push rdi                                        ; 1th
-    27                                  
-    28                                          ;mov rbx, rdi                                    ; save string address
-    29                                          ;mov rsi, rbx
-    30                                  
-    31                                  
-    32 0000000D E80F000000                      call Parcing
-    33 00000012 E8A5000000                      call FlushBuffer
-    34                                  
+    19 00000009 4153                            push r11                                        ;
+    20 0000000B 4154                            push r12                                        ;
+    21 0000000D 4155                            push r13                                        ;
+    22                                  
+    23                                          ;push r9                                        ; 6th argument
+    24                                          ;push r8                                        ; 5th
+    25                                          ;push rcx                                       ; 4th
+    26                                          ;push rdx                                       ; 3th
+    27 0000000F 56                              push rsi                                        ; 2th
+    28 00000010 57                              push rdi                                        ; 1th
+    29                                  
+    30                                          ;mov rbx, rdi                                   ; save string address
+    31                                          ;mov rsi, rbx
+    32                                  
+    33 00000011 E813000000                      call Parcing
+    34 00000016 E8A4000000                      call FlushBuffer
     35                                  
-    36 00000017 5F                              pop rdi
-    37 00000018 5E                              pop rsi
+    36 0000001B 5F                              pop rdi
+    37 0000001C 5E                              pop rsi
     38                                          ;pop rdx
     39                                          ;pop rcx
     40                                          ;pop r8
     41                                          ;pop r9
     42                                  
-    43 00000019 415B                            pop r11
-    44 0000001B 5B                              pop rbx
-    45                                  
-    46 0000001C 4889EC                          mov rsp, rbp
-    47 0000001F 5D                              pop rbp
-    48                                  
-    49 00000020 C3                              ret
+    43 0000001D 415D                            pop r13
+    44 0000001F 415C                            pop r12
+    45 00000021 415B                            pop r11
+    46 00000023 5B                              pop rbx
+    47                                  
+    48 00000024 4889EC                          mov rsp, rbp
+    49 00000027 5D                              pop rbp
     50                                  
-    51                                  
-    52                                  ;=============================================================================
-    53                                  ; Parcing string func
-    54                                  ; Entry:
-    55                                  ; Exit:
-    56                                  ; Destr:                                                                   !!!
-    57                                  ;=============================================================================
-    58                                  Parcing:
-    59                                  
-    60 00000021 55                              push rbp
-    61 00000022 4889E5                          mov rbp, rsp
-    62 00000025 488B7510                        mov rsi, [rbp + 16]
-    63                                  
-    64 00000029 E8C4000000                      call StrLen
+    51 00000028 C3                              ret
+    52                                  
+    53                                  
+    54                                  ;=============================================================================
+    55                                  ; Parcing string func
+    56                                  ; Entry:
+    57                                  ; Exit:
+    58                                  ; Destr:                                                                   !!!
+    59                                  ;=============================================================================
+    60                                  Parcing:
+    61                                  
+    62 00000029 55                              push rbp
+    63 0000002A 4889E5                          mov rbp, rsp
+    64 0000002D 488B7510                        mov rsi, [rbp + 16]
     65                                  
-    66 0000002E 4C8B1C25[00100000]              mov r11, [buf_position]
+    66 00000031 E839010000                      call StrLen
     67                                  
-    68 00000036 4C89D8                          mov rax, r11
-    69 00000039 4801C8                          add rax, rcx
-    70 0000003C 483D00100000                    cmp rax, BUFFER_SIZE
-    71 00000042 7E0B                            jle .continue
-    72                                  
-    73 00000044 E873000000                      call FlushBuffer
-    74 00000049 41BB00000000                    mov r11, 0
-    75                                  
-    76                                  .continue:
+    68 00000036 4C8B1C25[0A100000]              mov r11, [buf_position]
+    69                                  
+    70 0000003E 4C89D8                          mov rax, r11
+    71 00000041 4801C8                          add rax, rcx
+    72 00000044 483D00100000                    cmp rax, BUFFER_SIZE
+    73 0000004A 7E0B                            jle .continue
+    74                                  
+    75 0000004C E86E000000                      call FlushBuffer
+    76 00000051 41BB00000000                    mov r11, 0
     77                                  
-    78 0000004F 4D31D2                          xor r10, r10
-    79 00000052 4D31E4                          xor r12, r12
-    80                                  
-    81                                  .next:
-    82 00000055 8A06                            mov al, [rsi]
-    83                                  
-    84 00000057 3C00                            cmp al, 0
-    85 00000059 740E                            je exit_parcing
-    86                                  
-    87 0000005B 3C25                            cmp al, '%'
-    88 0000005D 740F                            je PercentHandler
-    89                                  
-    90 0000005F E83D000000                      call CharCopy
-    91 00000064 48FFC6                          inc rsi
-    92 00000067 EBEC                            jmp .next
-    93                                  
-    94                                  exit_parcing:
-    95 00000069 4889EC                          mov rsp, rbp
-    96 0000006C 5D                              pop rbp
-    97                                  
-    98 0000006D C3                              ret
+    78                                  .continue:
+    79                                  
+    80 00000057 4D31D2                          xor r10, r10
+    81 0000005A 4D31E4                          xor r12, r12
+    82                                  
+    83                                  next_parcing:
+    84 0000005D 8A06                            mov al, [rsi]
+    85                                  
+    86 0000005F 3C00                            cmp al, 0
+    87 00000061 740E                            je exit_parcing
+    88                                  
+    89 00000063 3C25                            cmp al, '%'
+    90 00000065 740F                            je PercentHandler
+    91                                  
+    92 00000067 E838000000                      call CharCopy
+    93 0000006C 48FFC6                          inc rsi
+    94 0000006F EBEC                            jmp next_parcing
+    95                                  
+    96                                  exit_parcing:
+    97 00000071 4889EC                          mov rsp, rbp
+    98 00000074 5D                              pop rbp
     99                                  
-   100                                  PercentHandler:
+   100 00000075 C3                              ret
    101                                  
-   102 0000006E 49FFC4                          inc r12
-   103 00000071 48FFC6                          inc rsi
-   104 00000074 4831C0                          xor rax, rax
-   105                                  
-   106 00000077 8A06                            mov al, [rsi]
-   107 00000079 3C64                            cmp al, 'd'
-   108 0000007B 7400                            je Decimal
-   109                                  
-   110                                  Decimal:
-   111 0000007D 4C8B1C25[00100000]              mov r11, [buf_position]
-   112 00000085 428A54E510                      mov dl, [rbp + 16 + r12*8]
-   113 0000008A 418893[00000000]                mov [buffer + r11], dl
-   114 00000091 66FFC6                          inc si
-   115 00000094 49FFC3                          inc r11
-   116 00000097 4C891C25[00100000]              mov [buf_position], r11
-   117 0000009F EBC8                            jmp exit_parcing
-   118                                  
-   119                                  
-   120                                  ;=============================================================================
-   121                                  ; Copy one symbol to buffer
-   122                                  ; Entry:        al - symbol
-   123                                  ; Exit:
-   124                                  ; Destr:                                                                   !!!
-   125                                  ;=============================================================================
-   126                                  CharCopy:
-   127                                  
-   128 000000A1 4C8B1C25[00100000]              mov r11, [buf_position]
-   129 000000A9 418883[00000000]                mov [buffer + r11], al
-   130 000000B0 49FFC3                          inc r11
-   131 000000B3 4C891C25[00100000]              mov [buf_position], r11
-   132                                  
-   133 000000BB C3                              ret
-   134                                  
-   135                                  ;=============================================================================
-   136                                  ;
-   137                                  ; Entry:
-   138                                  ; Exit:
-   139                                  ; Destr:                                                                   !!!
-   140                                  ;=============================================================================
-   141                                  FlushBuffer:
-   142                                  
-   143 000000BC 48833C25[00100000]-             cmp qword [buf_position], 0
-   143 000000C4 00                 
-   144 000000C5 742A                            je .exit
+   102                                  PercentHandler:
+   103                                  
+   104 00000076 49FFC4                          inc r12
+   105 00000079 48FFC6                          inc rsi
+   106 0000007C 4831C0                          xor rax, rax
+   107                                  
+   108 0000007F 8A06                            mov al, [rsi]
+   109 00000081 3C64                            cmp al, 'd'
+   110 00000083 7400                            je Decimal
+   111                                  
+   112                                  Decimal:
+   113 00000085 4C8B1C25[0A100000]              mov r11, [buf_position]
+   114 0000008D 4A6354E510                      movsxd rdx, [rbp + 16 + r12*8]                  ; save my life...
+   115                                  
+   116 00000092 E85E000000                      call ConvertHex
+   117                                  
+   118 00000097 48FFC6                          inc rsi
+   119 0000009A 4C891C25[0A100000]              mov [buf_position], r11
+   120 000000A2 EBB9                            jmp next_parcing
+   121                                  
+   122                                  
+   123                                  ;=============================================================================
+   124                                  ; Copy one symbol to buffer
+   125                                  ; Entry:        al - symbol
+   126                                  ; Exit:
+   127                                  ; Destr: R11                                                               !!!
+   128                                  ;=============================================================================
+   129                                  CharCopy:
+   130                                  
+   131 000000A4 4C8B1C25[0A100000]              mov r11, [buf_position]
+   132 000000AC 418883[0A000000]                mov [buffer + r11], al
+   133 000000B3 49FFC3                          inc r11
+   134 000000B6 4C891C25[0A100000]              mov [buf_position], r11
+   135                                  
+   136 000000BE C3                              ret
+   137                                  
+   138                                  ;=============================================================================
+   139                                  ; Func to Flush the Buffer
+   140                                  ; Entry:
+   141                                  ; Exit:
+   142                                  ; Destr: RAX, RDI, RSI, RDX                                                !!!
+   143                                  ;=============================================================================
+   144                                  FlushBuffer:
    145                                  
-   146 000000C7 B801000000                      mov rax, 1
-   147 000000CC BF01000000                      mov rdi, 1
-   148 000000D1 48BE-                           mov rsi, buffer
-   148 000000D3 [0000000000000000] 
-   149 000000DB 488B1425[00100000]              mov rdx, [buf_position]
-   150 000000E3 0F05                            syscall
-   151                                  
-   152 000000E5 48C70425[00100000]-             mov qword [buf_position], 0
-   152 000000ED 00000000           
-   153                                  
-   154                                  .exit:
-   155 000000F1 C3                              ret
+   146 000000BF 48833C25[0A100000]-             cmp qword [buf_position], 0
+   146 000000C7 00                 
+   147 000000C8 742A                            je .exit
+   148                                  
+   149 000000CA B801000000                      mov rax, 1
+   150 000000CF BF01000000                      mov rdi, 1
+   151 000000D4 48BE-                           mov rsi, buffer
+   151 000000D6 [0A00000000000000] 
+   152 000000DE 488B1425[0A100000]              mov rdx, [buf_position]
+   153 000000E6 0F05                            syscall
+   154                                  
+   155 000000E8 48C70425[0A100000]-             mov qword [buf_position], 0
+   155 000000F0 00000000           
    156                                  
-   157                                  ;=============================================================================
-   158                                  ; Count length of string
-   159                                  ; Entry:        rsi = string offset
-   160                                  ; Exit:         rcx = length of string
-   161                                  ; Destr: AL                                                                !!!
-   162                                  ;=============================================================================
-   163                                  StrLen:
-   164                                  
-   165 000000F2 53                              push rbx
-   166 000000F3 4889F3                          mov rbx, rsi
-   167 000000F6 4831C9                          xor rcx, rcx
-   168                                  .cycle:
-   169 000000F9 8A03                            mov al, [rbx]
-   170 000000FB 3C00                            cmp al, 0
-   171 000000FD 7407                            je .match
-   172                                  
-   173 000000FF FEC1                            inc cl
-   174 00000101 48FFC3                          inc rbx
-   175 00000104 EBF3                            jmp .cycle
-   176                                  
-   177                                  .match:
-   178 00000106 5B                              pop rbx
+   157                                  .exit:
+   158 000000F4 C3                              ret
+   159                                  
+   160                                  ;=============================================================================
+   161                                  ; Convert Hex to good numbers
+   162                                  ; Entry:        dl = number
+   163                                  ;               r11 = buf_pos
+   164                                  ; Exit:
+   165                                  ; Destr: RBX,                                                                  !!!
+   166                                  ;=============================================================================
+   167                                  ConvertHex:
+   168                                  
+   169 000000F5 4889D3                          mov rbx, rdx
+   170                                  
+   171 000000F8 4D89DD                          mov r13, r11
+   172 000000FB 80FA00                          cmp dl, 0
+   173 000000FE 7D11                            jge .positive                                   ; >= 0
+   174                                  
+   175 00000100 41C685[0A000000]2D              mov byte [buffer + r13], '-'
+   176 00000108 49FFC5                          inc r13
+   177 0000010B 49FFC3                          inc r11
+   178 0000010E 48F7DB                          neg rbx
    179                                  
-   180 00000107 C3                              ret
-   181                                  
-   182                                  section .data
-   183                                  
-   184                                          BUFFER_SIZE  equ  4096                          ; Linux page memory size
+   180                                  .positive:
+   181 00000111 4831D2                          xor rdx, rdx
+   182 00000114 4889D8                          mov rax, rbx
+   183 00000117 BB0A000000                      mov rbx, 10
+   184 0000011C 48F7F3                          div rbx                                         ; rax - quotient, rdx - remainder
    185                                  
-   186                                  buffer:
-   187 00000000 00<rep 1000h>                   times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
-   188                                  
-   189                                  buf_position:
-   190 00001000 0000000000000000                dq  0                                           ; 8 byte (to match the size of the registers)
-   191                                  
+   186 0000011F 4889C3                          mov rbx, rax
+   187 00000122 4831C0                          xor rax, rax
+   188 00000125 8A82[00000000]                  mov al, [digits + rdx]                          ; ASCII
+   189 0000012B 418885[0A000000]                mov [buffer + r13], al
+   190 00000132 49FFC5                          inc r13
+   191 00000135 4883FB00                        cmp rbx, 0
+   192 00000139 7FD6                            jg .positive                                    ; signed greater
+   193                                  
+   194 0000013B 4831C0                          xor rax, rax
+   195 0000013E 4831DB                          xor rbx, rbx
+   196                                  
+   197 00000141 4155                            push r13
+   198                                  
+   199                                  .turn_over:
+   200 00000143 4D39EB                          cmp r11, r13
+   201 00000146 7D24                            jge .exit
+   202                                  
+   203 00000148 418A85[09000000]                mov al, [buffer + r13 - 1]
+   204 0000014F 418A9B[0A000000]                mov bl, [buffer + r11]
+   205 00000156 41889D[09000000]                mov [buffer + r13 - 1], bl
+   206 0000015D 418883[0A000000]                mov [buffer + r11], al
+   207                                  
+   208 00000164 49FFC3                          inc r11
+   209 00000167 49FFCD                          dec r13
+   210 0000016A EBD7                            jmp .turn_over
+   211                                  
+   212                                  .exit:
+   213 0000016C 415B                            pop r11
+   214                                  
+   215 0000016E C3                              ret
+   216                                  
+   217                                  ;=============================================================================
+   218                                  ; Count length of string
+   219                                  ; Entry:        rsi = string offset
+   220                                  ; Exit:         rcx = length of string
+   221                                  ; Destr: AL                                                                !!!
+   222                                  ;=============================================================================
+   223                                  StrLen:
+   224                                  
+   225 0000016F 53                              push rbx
+   226 00000170 4889F3                          mov rbx, rsi
+   227 00000173 4831C9                          xor rcx, rcx
+   228                                  .cycle:
+   229 00000176 8A03                            mov al, [rbx]
+   230 00000178 3C00                            cmp al, 0
+   231 0000017A 7407                            je .match
+   232                                  
+   233 0000017C FEC1                            inc cl
+   234 0000017E 48FFC3                          inc rbx
+   235 00000181 EBF3                            jmp .cycle
+   236                                  
+   237                                  .match:
+   238 00000183 5B                              pop rbx
+   239                                  
+   240 00000184 C3                              ret
+   241                                  
+   242                                  
+   243                                  
+   244                                  section .data
+   245                                  
+   246                                  ASCII_NULL      equ  "0"
+   247                                  ASCII_NINE      equ  "9"
+   248                                  ASCII_A         equ  "A"
+   249                                  ASCII_F         equ  "F"
+   250                                  ASCII_SPACE     equ  " "
+   251                                  ASCII_SL_N      equ  0Ah
+   252                                  ASCII_SL_R      equ  0Dh
+   253                                  
+   254                                  BUFFER_SIZE     equ  4096                               ; Linux page memory size
+   255                                  
+   256 00000000 303132333435363738-     digits db "0123456789"
+   256 00000009 39                 
+   257                                  
+   258                                  buffer:
+   259 0000000A 00<rep 1000h>                   times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
+   260                                  
+   261                                  buf_position:
+   262 0000100A 0000000000000000                dq  0                                           ; 8 byte (to match the size of the registers)

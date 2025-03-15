@@ -1,4 +1,9 @@
 
+program:
+	make asm
+	make main
+	make all
+
 asm:
 	nasm -g -f elf64 -l build/printf.lst -o build/MyPrintf.o src/MyPrintf.s
 
@@ -13,8 +18,3 @@ run:
 
 debug:
 	gdb ./build/program
-
-program:
-	make asm
-	make main
-	make all

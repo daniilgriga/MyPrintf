@@ -1,8 +1,8 @@
 
 ; |=================================================|
-; |                                                 |
-; |                MyPrintf FUNCTION                |
-; |                                                 |
+; | <---------------------------------------------> |
+; | <------------> MyPrintf FUNCTION <------------> |
+; | <---------------------------------------------> |
 ; |=================================================|
 
 section .text
@@ -16,7 +16,9 @@ MyPrintf:
         sub rsp, 8                                      ; stack alignment on 16-byte boundary
 
         push rbx                                        ; save
-        push r11                                        ; save
+        push r11                                        ;
+        push r12                                        ;
+        push r13                                        ;
 
         ;push r9                                        ; 6th argument
         ;push r8                                        ; 5th
@@ -25,13 +27,11 @@ MyPrintf:
         push rsi                                        ; 2th
         push rdi                                        ; 1th
 
-        ;mov rbx, rdi                                    ; save string address
+        ;mov rbx, rdi                                   ; save string address
         ;mov rsi, rbx
-
 
         call Parcing
         call FlushBuffer
-
 
         pop rdi
         pop rsi
@@ -40,6 +40,8 @@ MyPrintf:
         ;pop r8
         ;pop r9
 
+        pop r13
+        pop r12
         pop r11
         pop rbx
 
@@ -78,7 +80,7 @@ Parcing:
         xor r10, r10
         xor r12, r12
 
-.next:
+next_parcing:
         mov al, [rsi]
 
         cmp al, 0
@@ -89,7 +91,7 @@ Parcing:
 
         call CharCopy
         inc rsi
-        jmp .next
+        jmp next_parcing
 
 exit_parcing:
         mov rsp, rbp
@@ -109,19 +111,20 @@ PercentHandler:
 
 Decimal:
         mov r11, [buf_position]
-        mov dl, [rbp + 16 + r12*8]
-        mov [buffer + r11], dl
-        inc si
-        inc r11
+        movsxd rdx, [rbp + 16 + r12*8]                  ; save my life...
+
+        call ConvertHex
+
+        inc rsi
         mov [buf_position], r11
-        jmp exit_parcing
+        jmp next_parcing
 
 
 ;=============================================================================
 ; Copy one symbol to buffer
 ; Entry:        al - symbol
 ; Exit:
-; Destr:                                                                   !!!
+; Destr: R11                                                               !!!
 ;=============================================================================
 CharCopy:
 
@@ -133,10 +136,10 @@ CharCopy:
         ret
 
 ;=============================================================================
-;
+; Func to Flush the Buffer
 ; Entry:
 ; Exit:
-; Destr:                                                                   !!!
+; Destr: RAX, RDI, RSI, RDX                                                !!!
 ;=============================================================================
 FlushBuffer:
 
@@ -152,6 +155,63 @@ FlushBuffer:
         mov qword [buf_position], 0
 
 .exit:
+        ret
+
+;=============================================================================
+; Convert Hex to good numbers
+; Entry:        dl = number
+;               r11 = buf_pos
+; Exit:
+; Destr: RBX,                                                                  !!!
+;=============================================================================
+ConvertHex:
+
+        mov rbx, rdx
+
+        mov r13, r11
+        cmp dl, 0
+        jge .positive                                   ; >= 0
+
+        mov byte [buffer + r13], '-'
+        inc r13
+        inc r11
+        neg rbx
+
+.positive:
+        xor rdx, rdx
+        mov rax, rbx
+        mov rbx, 10
+        div rbx                                         ; rax - quotient, rdx - remainder
+
+        mov rbx, rax
+        xor rax, rax
+        mov al, [digits + rdx]                          ; ASCII
+        mov [buffer + r13], al
+        inc r13
+        cmp rbx, 0
+        jg .positive                                    ; signed greater
+
+        xor rax, rax
+        xor rbx, rbx
+
+        push r13
+
+.turn_over:
+        cmp r11, r13
+        jge .exit
+
+        mov al, [buffer + r13 - 1]
+        mov bl, [buffer + r11]
+        mov [buffer + r13 - 1], bl
+        mov [buffer + r11], al
+
+        inc r11
+        dec r13
+        jmp .turn_over
+
+.exit:
+        pop r11
+
         ret
 
 ;=============================================================================
@@ -179,13 +239,24 @@ StrLen:
 
         ret
 
+
+
 section .data
 
-        BUFFER_SIZE  equ  4096                          ; Linux page memory size
+ASCII_NULL      equ  "0"
+ASCII_NINE      equ  "9"
+ASCII_A         equ  "A"
+ASCII_F         equ  "F"
+ASCII_SPACE     equ  " "
+ASCII_SL_N      equ  0Ah
+ASCII_SL_R      equ  0Dh
+
+BUFFER_SIZE     equ  4096                               ; Linux page memory size
+
+digits db "0123456789"
 
 buffer:
         times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
 
 buf_position:
         dq  0                                           ; 8 byte (to match the size of the registers)
-
