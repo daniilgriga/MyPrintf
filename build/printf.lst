@@ -19,67 +19,114 @@
     19 00000009 4153                            push r11                                        ; save
     20                                  
     21 0000000B 4889FB                          mov rbx, rdi                                    ; save string address
-    22                                  
-    23 0000000E 4889DE                          mov rsi, rbx
-    24 00000011 E808000000                      call StrLen
+    22 0000000E 4889DE                          mov rsi, rbx
+    23                                  
+    24 00000011 E88C000000                      call StrLen
     25                                  
-    26                                          ;call StringParcing
-    27                                  
-    28 00000016 4153                            push r11
-    29 00000018 53                              push rbx
-    30                                  
-    31 00000019 4889EC                          mov rsp, rbp
-    32 0000001C 5D                              pop rbp
-    33                                  
-    34 0000001D C3                              ret
-    35                                  
-    36                                  ;=============================================================================
-    37                                  ;
-    38                                  ; Entry:
-    39                                  ; Exit:
-    40                                  ; Destr:                                                                   !!!
-    41                                  ;=============================================================================
-    42                                  ;StringParcing:
-    43                                  
-    44                                  ;        mov r11, [buf_position]
-    45                                  
-    46                                  ;        mov rax, r11
-    47                                  ;        add rax, rcx
-    48                                  ;        cmp rax, BUFFER_SIZE
-    49                                  
-    50                                  
-    51                                  ;=============================================================================
-    52                                  ; Count length of string
-    53                                  ; Entry:        rsi = string offset
-    54                                  ; Exit:         rcx = length of string
-    55                                  ; Destr: AL                                                                !!!
-    56                                  ;=============================================================================
-    57                                  StrLen:
-    58                                  
-    59 0000001E 53                              push rbx
-    60 0000001F 4889F3                          mov rbx, rsi
-    61 00000022 4831C9                          xor rcx, rcx
-    62                                  .cycle:
-    63 00000025 8A03                            mov al, [rbx]
-    64 00000027 3C00                            cmp al, 0
-    65 00000029 7407                            je .match
-    66                                  
-    67 0000002B FEC1                            inc cl
-    68 0000002D 48FFC3                          inc rbx
-    69 00000030 EBF3                            jmp .cycle
+    26 00000016 E80D000000                      call StringParcing
+    27 0000001B E84C000000                      call FlushBuffer
+    28                                  
+    29 00000020 415B                            pop r11
+    30 00000022 5B                              pop rbx
+    31                                  
+    32 00000023 4889EC                          mov rsp, rbp
+    33 00000026 5D                              pop rbp
+    34                                  
+    35 00000027 C3                              ret
+    36                                  
+    37                                  ;=============================================================================
+    38                                  ;
+    39                                  ; Entry:
+    40                                  ; Exit:
+    41                                  ; Destr:                                                                   !!!
+    42                                  ;=============================================================================
+    43                                  StringParcing:
+    44                                  
+    45 00000028 4C8B1C25[00100000]              mov r11, [buf_position]
+    46                                  
+    47 00000030 4C89D8                          mov rax, r11
+    48 00000033 4801C8                          add rax, rcx
+    49 00000036 483D00100000                    cmp rax, BUFFER_SIZE
+    50 0000003C 7E0B                            jle .continue
+    51                                  
+    52 0000003E E829000000                      call FlushBuffer
+    53 00000043 41BB00000000                    mov r11, 0
+    54                                  
+    55                                  .continue:
+    56 00000049 4831C0                          xor rax, rax
+    57                                  
+    58                                  .copy:
+    59 0000004C 4839C8                          cmp rax, rcx
+    60 0000004F 7412                            je .exit
+    61                                  
+    62 00000051 8A1403                          mov dl, [rbx + rax]
+    63 00000054 418893[00000000]                mov [buffer + r11], dl
+    64 0000005B 48FFC0                          inc rax
+    65 0000005E 49FFC3                          inc r11
+    66 00000061 EBE9                            jmp .copy
+    67                                  
+    68                                  .exit:
+    69 00000063 4C891C25[00100000]              mov [buf_position], r11
     70                                  
-    71                                  .match:
-    72 00000032 5B                              pop rbx
-    73                                  
-    74 00000033 C3                              ret
-    75                                  
-    76                                  section .data
-    77                                  
-    78                                          BUFFER_SIZE  equ  4096                          ; Linux page memory size
-    79                                  
-    80                                  buffer:
-    81 00000000 00<rep 1000h>                   times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
-    82                                  
-    83                                  buf_position:
-    84 00001000 0000000000000000                dq  0                                           ; 8 byte (to match the size of the registers)
-    85                                  
+    71 0000006B C3                              ret
+    72                                  
+    73                                  ;=============================================================================
+    74                                  ;
+    75                                  ; Entry:
+    76                                  ; Exit:
+    77                                  ; Destr:                                                                   !!!
+    78                                  ;=============================================================================
+    79                                  FlushBuffer:
+    80                                  
+    81 0000006C 48833C25[00100000]-             cmp qword [buf_position], 0
+    81 00000074 00                 
+    82 00000075 742A                            je .exit
+    83                                  
+    84 00000077 B801000000                      mov rax, 1
+    85 0000007C BF01000000                      mov rdi, 1
+    86 00000081 48BE-                           mov rsi, buffer
+    86 00000083 [0000000000000000] 
+    87 0000008B 488B1425[00100000]              mov rdx, [buf_position]
+    88 00000093 0F05                            syscall
+    89                                  
+    90 00000095 48C70425[00100000]-             mov qword [buf_position], 0
+    90 0000009D 00000000           
+    91                                  
+    92                                  .exit:
+    93 000000A1 C3                              ret
+    94                                  
+    95                                  ;=============================================================================
+    96                                  ; Count length of string
+    97                                  ; Entry:        rsi = string offset
+    98                                  ; Exit:         rcx = length of string
+    99                                  ; Destr: AL                                                                !!!
+   100                                  ;=============================================================================
+   101                                  StrLen:
+   102                                  
+   103 000000A2 53                              push rbx
+   104 000000A3 4889F3                          mov rbx, rsi
+   105 000000A6 4831C9                          xor rcx, rcx
+   106                                  .cycle:
+   107 000000A9 8A03                            mov al, [rbx]
+   108 000000AB 3C00                            cmp al, 0
+   109 000000AD 7407                            je .match
+   110                                  
+   111 000000AF FEC1                            inc cl
+   112 000000B1 48FFC3                          inc rbx
+   113 000000B4 EBF3                            jmp .cycle
+   114                                  
+   115                                  .match:
+   116 000000B6 5B                              pop rbx
+   117                                  
+   118 000000B7 C3                              ret
+   119                                  
+   120                                  section .data
+   121                                  
+   122                                          BUFFER_SIZE  equ  4096                          ; Linux page memory size
+   123                                  
+   124                                  buffer:
+   125 00000000 00<rep 1000h>                   times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
+   126                                  
+   127                                  buf_position:
+   128 00001000 0000000000000000                dq  0                                           ; 8 byte (to match the size of the registers)
+   129                                  
