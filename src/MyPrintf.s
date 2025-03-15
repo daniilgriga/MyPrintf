@@ -11,45 +11,28 @@ global MyPrintf
 
 MyPrintf:
 
-        push rbp
-        mov rbp, rsp
-        sub rsp, 8                                      ; stack alignment on 16-byte boundary
+        pop r15                                         ; return address
 
-        push rbx                                        ; save
-        push r11                                        ;
-        push r12                                        ;
-        push r13                                        ;
-
-        ;push r9                                        ; 6th argument
-        ;push r8                                        ; 5th
-        ;push rcx                                       ; 4th
-        ;push rdx                                       ; 3th
+        push r9                                         ; 6th argument
+        push r8                                         ; 5th
+        push rcx                                        ; 4th
+        push rdx                                        ; 3th
         push rsi                                        ; 2th
         push rdi                                        ; 1th
-
-        ;mov rbx, rdi                                   ; save string address
-        ;mov rsi, rbx
 
         call Parcing
         call FlushBuffer
 
         pop rdi
         pop rsi
-        ;pop rdx
-        ;pop rcx
-        ;pop r8
-        ;pop r9
+        pop rdx
+        pop rcx
+        pop r8
+        pop r9
 
-        pop r13
-        pop r12
-        pop r11
-        pop rbx
-
-        mov rsp, rbp
-        pop rbp
+        push r15
 
         ret
-
 
 ;=============================================================================
 ; Parcing string func
@@ -253,10 +236,21 @@ ASCII_SL_R      equ  0Dh
 
 BUFFER_SIZE     equ  4096                               ; Linux page memory size
 
-digits db "0123456789"
+digits  db "0123456789"
 
 buffer:
         times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
 
 buf_position:
         dq  0                                           ; 8 byte (to match the size of the registers)
+
+;jump_table:
+;                        dq Binary
+;                        dq Char
+;                        dq Demical
+;  times ('o' - 'd' - 1) dq Error
+;                        dq Octal
+;  times ('s' - 'o' - 1) dq Error
+;                        dq String
+;  times ('x' - 's' - 1) dq Error
+;                        dq Hexademical
