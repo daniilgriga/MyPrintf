@@ -93,7 +93,6 @@ PercentHandler:
         jmp rax
 
 Binary:
-
         mov r11, [buf_position]
         movsxd rdx, [rbp + 16 + r12*8]
 
@@ -104,12 +103,14 @@ Binary:
         jmp next_parcing
 
 Char:
+        movsxd rax, [rbp + 16 + r12*8]
 
+        call CharCopy
 
-
+        inc rsi
+        jmp next_parcing
 
 Decimal:
-
         mov r11, [buf_position]
         movsxd rdx, [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
 

@@ -6,7 +6,7 @@ int main (void)
 {
     fprintf (stderr, "Call MyPrintf >>> ");
 
-    MyPrintf ("\n" "CHECK: <%d> <%b> <%b> <%d> <%b> <%b> <%d>" "\n", 1, 2, 3, 4, 5, 6, 7);
+    MyPrintf ("\n" "CHECK: <%d> <%b> <%c>" "\n", 1, 2, 'X');
 
     fprintf (stderr, " <<< End of call\n");
 
