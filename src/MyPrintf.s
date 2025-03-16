@@ -21,8 +21,13 @@ MyPrintf:
         push rdi                                        ; 1th
 
         call Parcing
+
+        cmp r14, 666                                    ; if error
+        je .exit
+
         call FlushBuffer
 
+.exit:
         pop rdi
         pop rsi
         pop rdx
@@ -83,7 +88,6 @@ exit_parcing:
         ret
 
 PercentHandler:
-
         inc r12
         inc rsi
         xor rax, rax
@@ -91,6 +95,17 @@ PercentHandler:
         mov al, [rsi]
         mov rax, [jump_table + (rax - 'b')*8]
         jmp rax
+
+Error:
+
+        mov rax, 0x01
+        mov rdi, 1
+        mov rsi, ErrorMessage
+        mov rdx, ErrorMessageLen
+        syscall
+
+        mov r14, 666                                    ; error code
+        jmp exit_parcing
 
 Binary:
         mov r11, [buf_position]
@@ -291,19 +306,18 @@ ASCII_SL_R      equ  0Dh
 
 BUFFER_SIZE     equ  4096                               ; Linux page memory size
 
-digits          db "0123456789"
+ErrorMessage    db      "Syntax error!"
+ErrorMessageLen equ      $ - ErrorMessage
 
-buffer:
-        times BUFFER_SIZE  db  0                        ; BUFFER_SIZE times 0 byte
-
-buf_position:
-        dq  0                                           ; 8 byte (to match the size of the registers)
+digits:         db      "0123456789"
+buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
+buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
 
 jump_table:
-                         dq Binary
-                         dq Char
-                         dq Decimal
-;  times ('o' - 'd' - 1) dq Error
+                        dq Binary
+                        dq Char
+                        dq Decimal
+ times ('o' - 'd' - 1)  dq Error
 ;                        dq Octal
 ;  times ('s' - 'o' - 1) dq Error
 ;                        dq String
