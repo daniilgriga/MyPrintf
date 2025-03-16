@@ -36,7 +36,7 @@ MyPrintf:
 
 ;=============================================================================
 ; Parcing string func
-; Entry:
+; Entry:        all arguments in stack
 ; Exit:
 ; Destr:                                                                   !!!
 ;=============================================================================
@@ -106,6 +106,8 @@ Binary:
 Char:
 
 
+
+
 Decimal:
 
         mov r11, [buf_position]
@@ -116,7 +118,6 @@ Decimal:
         inc rsi
         mov [buf_position], r11
         jmp next_parcing
-
 
 ;=============================================================================
 ; Copy one symbol to buffer
@@ -157,11 +158,11 @@ FlushBuffer:
 
 
 ;=============================================================================
-; Convert Hex to good numbers
+; Convert to Binary number
 ; Entry:        dl = number
 ;               r11 = buf_pos
 ; Exit:
-; Destr: RBX,                                                              !!!
+; Destr: RDX, RAX, RCX                                                     !!!
 ;=============================================================================
 ConvertBin:
 
@@ -174,7 +175,7 @@ ConvertBin:
         mov rax, rdx
         shr rax, cl
         and rax, 1
-        cmp rax, 1
+        cmp rax, 1                                      ; find first 1 for leading zeros
         je .convert
         dec rcx
         cmp rcx, -1
@@ -198,7 +199,7 @@ ConvertBin:
 ; Entry:        dl = number
 ;               r11 = buf_pos
 ; Exit:
-; Destr: RBX,                                                              !!!
+; Destr: RBX, RAX, RCX, RDX                                                !!!
 ;=============================================================================
 ConvertHex:
 
