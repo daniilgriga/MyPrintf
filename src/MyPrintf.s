@@ -22,7 +22,7 @@ MyPrintf:
 
         call Parcing
 
-        cmp r14, 666                                    ; if error
+        cmp rax, 666                                    ; if error code
         je .exit
 
         call FlushBuffer
@@ -97,14 +97,13 @@ PercentHandler:
         jmp rax
 
 Error:
-
         mov rax, 0x01
         mov rdi, 1
         mov rsi, ErrorMessage
         mov rdx, ErrorMessageLen
         syscall
 
-        mov r14, 666                                    ; error code
+        mov rax, 666                                    ; error code
         jmp exit_parcing
 
 Binary:
@@ -129,7 +128,17 @@ Decimal:
         mov r11, [buf_position]
         movsxd rdx, [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
 
-        call ConvertHex
+        call ConvertDec
+
+        inc rsi
+        mov [buf_position], r11
+        jmp next_parcing
+
+Octal:
+        mov r11, [buf_position]
+        movsxd rdx, [rbp + 16 + r12*8]
+
+        ;call ConvertOct
 
         inc rsi
         mov [buf_position], r11
@@ -217,7 +226,7 @@ ConvertBin:
 ; Exit:
 ; Destr: RBX, RAX, RCX, RDX                                                !!!
 ;=============================================================================
-ConvertHex:
+ConvertDec:
 
         mov rbx, rdx
 
@@ -318,7 +327,7 @@ jump_table:
                         dq Char
                         dq Decimal
  times ('o' - 'd' - 1)  dq Error
-;                        dq Octal
+                       ; dq Octal
 ;  times ('s' - 'o' - 1) dq Error
 ;                        dq String
 ;  times ('x' - 's' - 1) dq Error
