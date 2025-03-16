@@ -165,11 +165,24 @@ FlushBuffer:
 ;=============================================================================
 ConvertBin:
 
-        mov rbx, rdx
         mov rcx, 31                                     ; 31 bites (0th bit - sign)
 
+        cmp dl, 0
+        jng .convert
+
+.find_first:
+        mov rax, rdx
+        shr rax, cl
+        and rax, 1
+        cmp rax, 1
+        je .convert
+        dec rcx
+        cmp rcx, -1
+        je .convert
+        jmp .find_first
+
 .convert:
-        mov rax, rbx
+        mov rax, rdx
         shr rax, cl
         and rax, 1
         mov al, [digits + rax]                          ; ASCII
