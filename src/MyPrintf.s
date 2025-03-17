@@ -56,10 +56,9 @@ Parsing:
         jle .continue
 
         call FlushBuffer
-        mov r11, 0
+        mov byte [buf_position], 0
 
 .continue:
-
         xor r10, r10
         xor r12, r12
 
@@ -89,7 +88,7 @@ exit_parsing:
 PercentHandler:
         inc r12
         inc rsi
-        xor rax, rax
+        xor rax, rax                                    ; arg must be > '%' and < 'x'
 
         mov al, [rsi]
 
@@ -137,7 +136,7 @@ Char:
 
 Decimal:
         mov r11, [buf_position]
-        movsxd rdx, dword [rbp + 8 + r12*8]            ; save my life... (int 32 bites)
+        movsxd rdx, dword [rbp + 8 + r12*8]             ; save my life... (int 32 bites)
 
         call ConvertDec
 
@@ -156,6 +155,44 @@ Octal:
         jmp next_parsing
 
 String:
+        push rsi
+        mov rsi, [rbp + 8 + r12*8]
+
+        jmp StringCopy
+
+;=============================================================================
+; Copy one symbol to buffer
+; Entry:        rsi = address
+;               r11 = buf_position
+; Exit:
+; Destr: R11                                                               !!!
+;=============================================================================
+StringCopy:
+
+        call StrLen
+
+        mov rax, r11
+        add rax, rcx
+        cmp rax, BUFFER_SIZE
+        jle .continue
+
+        call FlushBuffer
+        mov byte [buf_position], 0
+
+.continue:
+        mov al, [rsi]
+        mov [buffer + r11], al
+        inc r11
+        dec rcx
+        inc rsi
+        cmp rcx, 0
+        jne .continue
+
+        pop rsi
+        inc rsi
+        mov [buf_position], r11
+        jmp next_parsing
+
 ;=============================================================================
 ; Copy one symbol to buffer
 ; Entry:        al - symbol
@@ -393,7 +430,7 @@ jump_table:
                         dq Octal
  times ('s' - 'o' - 1)  dq Error
                         dq String
-; times ('x' - 's' - 1)  dq Error
+ times ('x' - 's' - 1)  dq Error
 ;                        dq Hexademical
 
 
