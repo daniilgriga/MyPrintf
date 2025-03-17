@@ -20,14 +20,9 @@ MyPrintf:
         push rsi                                        ; 2th
         push rdi                                        ; 1th
 
-        call Parcing
+        jmp Parsing
 
-        cmp rax, 666                                    ; if error code
-        je .exit
-
-        call FlushBuffer
-
-.exit:
+return:
         pop rdi
         pop rsi
         pop rdx
@@ -40,16 +35,16 @@ MyPrintf:
         ret
 
 ;=============================================================================
-; Parcing string func
+; Parsing string func
 ; Entry:        all arguments in stack
 ; Exit:
 ; Destr:                                                                   !!!
 ;=============================================================================
-Parcing:
+Parsing:
 
         push rbp
         mov rbp, rsp
-        mov rsi, [rbp + 16]
+        mov rsi, [rbp + 8]
 
         call StrLen
 
@@ -68,24 +63,28 @@ Parcing:
         xor r10, r10
         xor r12, r12
 
-next_parcing:
+next_parsing:
         mov al, [rsi]
 
         cmp al, 0
-        je exit_parcing
+        je exit_parsing
 
         cmp al, '%'
         je PercentHandler
 
         call CharCopy
         inc rsi
-        jmp next_parcing
+        jmp next_parsing
 
-exit_parcing:
+exit_parsing:
+        cmp rax, 666                                    ; if error code
+        je .skip_flush
+        call FlushBuffer
+
+.skip_flush:
         mov rsp, rbp
         pop rbp
-
-        ret
+        jmp return
 
 PercentHandler:
         inc r12
@@ -93,6 +92,16 @@ PercentHandler:
         xor rax, rax
 
         mov al, [rsi]
+
+        cmp al, '%'
+        jne .skip_percent
+
+        call CharCopy
+        inc rsi
+        dec r12
+        jmp next_parsing
+
+.skip_percent:
         mov rax, [jump_table + (rax - 'b')*8]
         jmp rax
 
@@ -103,47 +112,50 @@ Error:
         mov rdx, ErrorMessageLen
         syscall
 
+        mov byte [buf_position], 0
+
         mov rax, 666                                    ; error code
-        jmp exit_parcing
+        jmp exit_parsing
 
 Binary:
         mov r11, [buf_position]
-        movsxd rdx, [rbp + 16 + r12*8]
+        movsxd rdx, [rbp + 8 + r12*8]
 
         call ConvertBin
 
         inc rsi
         mov [buf_position], r11
-        jmp next_parcing
+        jmp next_parsing
 
 Char:
-        movsxd rax, [rbp + 16 + r12*8]
+        movsxd rax, [rbp + 8 + r12*8]
 
         call CharCopy
 
         inc rsi
-        jmp next_parcing
+        jmp next_parsing
 
 Decimal:
         mov r11, [buf_position]
-        movsxd rdx, dword [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
+        movsxd rdx, dword [rbp + 8 + r12*8]            ; save my life... (int 32 bites)
 
         call ConvertDec
 
         inc rsi
         mov [buf_position], r11
-        jmp next_parcing
+        jmp next_parsing
 
 Octal:
         mov r11, [buf_position]
-        mov edx, [rbp + 16 + r12*8]
+        mov edx, [rbp + 8 + r12*8]
 
         call ConvertOct
 
         inc rsi
         mov [buf_position], r11
-        jmp next_parcing
+        jmp next_parsing
 
+String:
 ;=============================================================================
 ; Copy one symbol to buffer
 ; Entry:        al - symbol
@@ -211,7 +223,7 @@ ConvertOct:
         je .skip
 
         cmp rbx, 0
-        jg .positive                                    ; signed greater
+        jg .positive
 
         xor rax, rax
         xor rbx, rbx
@@ -366,7 +378,7 @@ ASCII_SL_R      equ  0Dh
 
 BUFFER_SIZE     equ  4096                               ; Linux page memory size
 
-ErrorMessage    db      "Syntax error!"
+ErrorMessage    db      "Syntax error!", 0xA
 ErrorMessageLen equ      $ - ErrorMessage
 
 digits:         db      "0123456789"
@@ -379,7 +391,14 @@ jump_table:
                         dq Decimal
  times ('o' - 'd' - 1)  dq Error
                         dq Octal
-;  times ('s' - 'o' - 1) dq Error
-;                        dq String
-;  times ('x' - 's' - 1) dq Error
+ times ('s' - 'o' - 1)  dq Error
+                        dq String
+; times ('x' - 's' - 1)  dq Error
 ;                        dq Hexademical
+
+
+
+
+
+; NOTE: tramplin - call -> jump
+; ded checks %c, %s, jmptbl
