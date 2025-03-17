@@ -126,7 +126,7 @@ Char:
 
 Decimal:
         mov r11, [buf_position]
-        movsxd rdx, [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
+        movsxd rdx, dword [rbp + 16 + r12*8]                  ; save my life... (int 32 bites)
 
         call ConvertDec
 
@@ -136,9 +136,9 @@ Decimal:
 
 Octal:
         mov r11, [buf_position]
-        movsxd rdx, [rbp + 16 + r12*8]
+        mov edx, [rbp + 16 + r12*8]
 
-        ;call ConvertOct
+        call ConvertOct
 
         inc rsi
         mov [buf_position], r11
@@ -181,6 +181,61 @@ FlushBuffer:
 .exit:
         ret
 
+;=============================================================================
+; Convert to Octal number
+; Entry:        dl = number
+;               r11 = buf_pos
+; Exit:
+; Destr: RDX, RAX, RCX                                                     !!!
+;=============================================================================
+ConvertOct:
+
+        mov rbx, rdx
+        mov r13, r11
+        xor rcx, rcx
+
+.positive:
+        xor rdx, rdx
+        mov rax, rbx
+        mov rbx, 8
+        div rbx                                         ; rax - quotient, rdx - remainder
+
+        mov rbx, rax
+        xor rax, rax
+        mov al, [digits + rdx]                          ; ASCII
+        mov [buffer + r13], al
+        inc rcx
+        inc r13
+
+        cmp rcx, 11
+        je .skip
+
+        cmp rbx, 0
+        jg .positive                                    ; signed greater
+
+        xor rax, rax
+        xor rbx, rbx
+
+.skip:
+        push r13
+
+.turn_over:
+        cmp r11, r13
+        jge .exit
+
+        mov al, [buffer + r13 - 1]
+        mov bl, [buffer + r11]
+        mov [buffer + r13 - 1], bl
+        mov [buffer + r11], al
+
+        inc r11
+        dec r13
+        jmp .turn_over
+
+.exit:
+        pop r11
+
+        ret
 
 ;=============================================================================
 ; Convert to Binary number
@@ -193,7 +248,7 @@ ConvertBin:
 
         mov rcx, 31                                     ; 31 bites (0th bit - sign)
 
-        cmp dl, 0
+        cmp rdx, 0
         jng .convert
 
 .find_first:
@@ -231,7 +286,7 @@ ConvertDec:
         mov rbx, rdx
 
         mov r13, r11
-        cmp dl, 0
+        cmp rbx, 0
         jge .positive                                   ; >= 0
 
         mov byte [buffer + r13], '-'
@@ -246,15 +301,11 @@ ConvertDec:
         div rbx                                         ; rax - quotient, rdx - remainder
 
         mov rbx, rax
-        xor rax, rax
         mov al, [digits + rdx]                          ; ASCII
         mov [buffer + r13], al
         inc r13
         cmp rbx, 0
         jg .positive                                    ; signed greater
-
-        xor rax, rax
-        xor rbx, rbx
 
         push r13
 
@@ -327,7 +378,7 @@ jump_table:
                         dq Char
                         dq Decimal
  times ('o' - 'd' - 1)  dq Error
-                       ; dq Octal
+                        dq Octal
 ;  times ('s' - 'o' - 1) dq Error
 ;                        dq String
 ;  times ('x' - 's' - 1) dq Error

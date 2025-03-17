@@ -8,14 +8,17 @@ int main (void)
 {
     fprintf (stderr, "Call MyPrintf >>> ");
 
-    int result = MyPrintf ("\n" "CHECK: <%d> <%d> <%d>" "\n", 1, 2, 543);
+    int result = MyPrintf ("\n" "     MyPrintf >>>: 45 in OCT = <%o> ||| -45 in OCT = <%o>", 45, -45);
     if (result == 666)
         fprintf (stderr,"\n" RED_TEXT(" Error in ") PURPLE_TEXT("%s: %d") "\n", __FILE__, __LINE__ - 2);
 
     fprintf (stderr, " <<< End of call \n");
 
-    fprintf (stderr, " <<<  %%o:  10 = %o\n",  10);
-    fprintf (stderr, " <<<  %%o: -10 = %o\n", -10);
+    fprintf (stderr, "Real printf() >>>: 45 in OCT = <%o> ||| -45 in OCT = <%o>\n",  45, -45);
+
+    int result_2 = MyPrintf ("\n" " STD CHECKS: 134 d = <%d> ||| 134 b = <%b> ||| 134 c = <%c>" "\n", 134, 134, 134);
+    if (result_2 == 666)
+        fprintf (stderr,"\n" RED_TEXT(" Error in ") PURPLE_TEXT("%s: %d") "\n", __FILE__, __LINE__ - 2);
 
     return 0;
 }
