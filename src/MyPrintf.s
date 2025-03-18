@@ -243,15 +243,15 @@ GlobalConverter:
 
         push r12
 
-        mov r14, rdi
-        mov r13, r11
+        mov r14, rdi                            ; base arg
+        mov r13, r11                            ; buf_position arg
 
 ;        cmp r14, 10
 ;        je .base_10
 
-        mov rcx, 32                             ; base 2
-        mov r15, 1
-        mov rax, 1
+        mov rcx, 32                             ; base 2 : count of symbols
+        mov r15, 1                              ;          shift by 1 bit
+        mov rax, 1                              ;          bit mask
 
         cmp r14, 8
         jne .check_base_16
@@ -271,25 +271,19 @@ GlobalConverter:
         mov r12, rcx
         add r13, r12
         mov r11, r13
-        ;cmp rcx, 32
-        ;jne .convert
+        cmp rcx, 32
+        jne .convert
 
-;.find_first:
-
-;        mov rdx, rbx
-;        and rdx, rax
-;        cmp rdx, 1                                      ; find first 1 for leading zeros
-;        je .convert
-
-;        push rcx
-;        mov cl, r15b
-;        shr rbx, cl
-;        pop rcx
-
-;        dec rcx
-;        cmp rcx, -1
-;        je .convert
-;        jmp .find_first
+.find_first:
+        mov rdx, rbx
+        shr rdx, cl
+        and rdx, 1
+        cmp rdx, 1                                      ; find first 1 for leading zeros
+        je .convert
+        dec rcx
+        cmp rcx, -1
+        je .convert
+        jmp .find_first
 
 .convert:
         push rcx
@@ -300,18 +294,17 @@ GlobalConverter:
         mov cl, [digits + rdx]                          ; ASCII
         mov [buffer + r13], cl
 
-        dec r13
         mov cl, r15b
         shr rbx, cl
+        dec r13
 
         pop rcx
         dec rcx
 
-        jnz .convert
+        jge .convert
         jmp .exit
 
 .exit:
-
         pop r12
         ret
 
