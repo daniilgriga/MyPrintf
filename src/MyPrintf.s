@@ -157,9 +157,24 @@ Octal:
         mov [buf_position], r11
         jmp next_parsing
 
+Hexademical:
+        mov r11, [buf_position]
+        mov ebx, [rbp + 8 + r12*8]
+        mov rdi, 16
+
+        call GlobalConverter
+
+        inc rsi
+        inc r11
+        mov [buf_position], r11
+        jmp next_parsing
+
 String:
-        push rsi
+        mov rdi, rsi
         mov rsi, [rbp + 8 + r12*8]
+        mov al, [rsi]
+        cmp al, 0
+        je Error
 
         jmp StringCopy
 
@@ -191,7 +206,7 @@ StringCopy:
         cmp rcx, 0
         jne .continue
 
-        pop rsi
+        mov rsi, rdi
         inc rsi
         mov [buf_position], r11
         jmp next_parsing
@@ -243,19 +258,19 @@ GlobalConverter:
 
         push r12
 
-        mov r14, rdi                            ; base arg
-        mov r13, r11                            ; buf_position arg
+        mov r14, rdi                                    ; base arg
+        mov r13, r11                                    ; buf_position arg
 
 ;        cmp r14, 10
 ;        je .base_10
 
-        mov rcx, 32                             ; base 2 : count of symbols
-        mov r15, 1                              ;          shift by 1 bit
-        mov rax, 1                              ;          bit mask
+        mov rcx, 31                                     ; base 2 : count of symbols
+        mov r15, 1                                      ;          shift by 1 bit
+        mov rax, 1                                      ;          bit mask
 
         cmp r14, 8
         jne .check_base_16
-        mov rcx, 11                             ; base 8
+        mov rcx, 10                                     ; base 8
         mov r15, 3
         mov rax, 0x7
         jmp .done
@@ -263,7 +278,7 @@ GlobalConverter:
 .check_base_16:
         cmp r14, 16
         jne .done
-        mov rcx, 8
+        mov rcx, 7
         mov r15, 4
         mov rax, 0xF
 
@@ -271,18 +286,16 @@ GlobalConverter:
         mov r12, rcx
         add r13, r12
         mov r11, r13
-        cmp rcx, 32
-        jne .convert
 
 .find_first:
         mov rdx, rbx
         shr rdx, cl
         and rdx, 1
-        cmp rdx, 1                                      ; find first 1 for leading zeros
-        je .convert
-        dec rcx
+        cmp edx, 0                                      ; find first 1 for leading zeros
+        jne .convert
+        sub rcx, r15
         cmp rcx, -1
-        je .convert
+        jle .convert
         jmp .find_first
 
 .convert:
@@ -513,7 +526,7 @@ jump_table:
  times ('s' - 'o' - 1)  dq Error
                         dq String
  times ('x' - 's' - 1)  dq Error
-;                        dq Hexademical
+                        dq Hexademical
 
 
 
