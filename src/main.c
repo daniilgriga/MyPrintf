@@ -6,7 +6,7 @@ extern int MyPrintf (const char* a, ...);
 
 int main (void)
 {
-    int result = MyPrintf ("\n" "greeting = '%s'" "\n", "hello how are you man");
+    int result = MyPrintf ("\n" "greeting = '%s'." " Im '%d' years old or '%o' years old" "\n", "hello how are you man", 10, 10);
     if (result == 666)
         fprintf (stderr,RED_TEXT(" Error in ") PURPLE_TEXT("%s: %d") "\n", __FILE__, __LINE__ - 2);
 

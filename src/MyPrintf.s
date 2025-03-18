@@ -11,7 +11,7 @@ global MyPrintf
 
 MyPrintf:
 
-        pop r15                                         ; return address
+        pop r10                                         ; return address
 
         push r9                                         ; 6th argument
         push r8                                         ; 5th
@@ -30,7 +30,7 @@ return:
         pop r8
         pop r9
 
-        push r15
+        push r10
 
         ret
 
@@ -59,7 +59,6 @@ Parsing:
         mov byte [buf_position], 0
 
 .continue:
-        xor r10, r10
         xor r12, r12
 
 next_parsing:
@@ -118,10 +117,12 @@ Error:
 
 Binary:
         mov r11, [buf_position]
-        movsxd rdx, [rbp + 8 + r12*8]
+        movsxd rbx, [rbp + 8 + r12*8]
+        mov rdi, 2
 
-        call ConvertBin
+        call GlobalConverter
 
+        inc r11
         inc rsi
         mov [buf_position], r11
         jmp next_parsing
@@ -146,11 +147,13 @@ Decimal:
 
 Octal:
         mov r11, [buf_position]
-        mov edx, [rbp + 8 + r12*8]
+        mov ebx, [rbp + 8 + r12*8]
+        mov rdi, 8
 
-        call ConvertOct
+        call GlobalConverter
 
         inc rsi
+        inc r11
         mov [buf_position], r11
         jmp next_parsing
 
@@ -230,6 +233,92 @@ FlushBuffer:
 .exit:
         ret
 
+; ############################################################################
+; Enter:        rbx = 32 bit number
+;               rdi = base
+;               r11 = buf_position
+;
+; ============================================================================
+GlobalConverter:
+
+        push r12
+
+        mov r14, rdi
+        mov r13, r11
+
+;        cmp r14, 10
+;        je .base_10
+
+        mov rcx, 32                             ; base 2
+        mov r15, 1
+        mov rax, 1
+
+        cmp r14, 8
+        jne .check_base_16
+        mov rcx, 11                             ; base 8
+        mov r15, 3
+        mov rax, 0x7
+        jmp .done
+
+.check_base_16:
+        cmp r14, 16
+        jne .done
+        mov rcx, 8
+        mov r15, 4
+        mov rax, 0xF
+
+.done:
+        mov r12, rcx
+        add r13, r12
+        mov r11, r13
+        ;cmp rcx, 32
+        ;jne .convert
+
+;.find_first:
+
+;        mov rdx, rbx
+;        and rdx, rax
+;        cmp rdx, 1                                      ; find first 1 for leading zeros
+;        je .convert
+
+;        push rcx
+;        mov cl, r15b
+;        shr rbx, cl
+;        pop rcx
+
+;        dec rcx
+;        cmp rcx, -1
+;        je .convert
+;        jmp .find_first
+
+.convert:
+        push rcx
+
+        mov rdx, rbx
+        and rdx, rax
+
+        mov cl, [digits + rdx]                          ; ASCII
+        mov [buffer + r13], cl
+
+        dec r13
+        mov cl, r15b
+        shr rbx, cl
+
+        pop rcx
+        dec rcx
+
+        jnz .convert
+        jmp .exit
+
+.exit:
+
+        pop r12
+        ret
+
+; ############################################################################
+
+
+
 ;=============================================================================
 ; Convert to Octal number
 ; Entry:        dl = number
@@ -300,16 +389,16 @@ ConvertBin:
         cmp rdx, 0
         jng .convert
 
-.find_first:
-        mov rax, rdx
-        shr rax, cl
-        and rax, 1
-        cmp rax, 1                                      ; find first 1 for leading zeros
-        je .convert
-        dec rcx
-        cmp rcx, -1
-        je .convert
-        jmp .find_first
+;.find_first:
+;        mov rdx, rbx
+;        shr rdx, cl
+;        and rdx, 1
+;        cmp rdx, 1                                      ; find first 1 for leading zeros
+;        je .convert
+;        dec rcx
+;        cmp rcx, -1
+;        je .convert
+;        jmp .find_first
 
 .convert:
         mov rax, rdx
@@ -418,7 +507,7 @@ BUFFER_SIZE     equ  4096                               ; Linux page memory size
 ErrorMessage    db      "Syntax error!", 0xA
 ErrorMessageLen equ      $ - ErrorMessage
 
-digits:         db      "0123456789"
+digits:         db      "0123456789ABCDEF"
 buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
 buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
 
