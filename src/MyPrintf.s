@@ -153,7 +153,7 @@ Octal:
         call GlobalConverter
 
         inc rsi
-        inc r11
+        ;inc r11
         mov [buf_position], r11
         jmp next_parsing
 
@@ -165,7 +165,7 @@ Hexademical:
         call GlobalConverter
 
         inc rsi
-        inc r11
+        ;inc r11
         mov [buf_position], r11
         jmp next_parsing
 
@@ -179,7 +179,7 @@ String:
         jmp StringCopy
 
 ;=============================================================================
-; Copy one symbol to buffer
+; Copy string to buffer
 ; Entry:        rsi = address
 ;               r11 = buf_position
 ; Exit:
@@ -188,6 +188,7 @@ String:
 StringCopy:
 
         call StrLen
+
 
         mov rax, r11
         add rax, rcx
@@ -261,16 +262,13 @@ GlobalConverter:
         mov r14, rdi                                    ; base arg
         mov r13, r11                                    ; buf_position arg
 
-;        cmp r14, 10
-;        je .base_10
-
-        mov rcx, 31                                     ; base 2 : count of symbols
+        mov rcx, 32                                     ; base 2 : count of symbols
         mov r15, 1                                      ;          shift by 1 bit
         mov rax, 1                                      ;          bit mask
 
         cmp r14, 8
         jne .check_base_16
-        mov rcx, 10                                     ; base 8
+        mov rcx, 11                                     ; base 8
         mov r15, 3
         mov rax, 0x7
         jmp .done
@@ -278,25 +276,32 @@ GlobalConverter:
 .check_base_16:
         cmp r14, 16
         jne .done
-        mov rcx, 7
+        mov rcx, 8
         mov r15, 4
         mov rax, 0xF
 
 .done:
-        mov r12, rcx
-        add r13, r12
-        mov r11, r13
+        add r13, rcx
+        mov r8, rcx
+        ;mov r11, r13
+        cmp r14, 8
+        je .convert
+        cmp r14, 16
+        je .convert
 
 .find_first:
         mov rdx, rbx
         shr rdx, cl
-        and rdx, 1
-        cmp edx, 0                                      ; find first 1 for leading zeros
-        jne .convert
-        sub rcx, r15
+        and rdx, rax
+        cmp rdx, 0                                      ; find first 1 for leading zeros
+        jne .okak
+        dec rcx
         cmp rcx, -1
-        jle .convert
+        jle .okak
         jmp .find_first
+
+.okak:
+        add r11, r13
 
 .convert:
         push rcx
@@ -315,7 +320,36 @@ GlobalConverter:
         dec rcx
 
         jge .convert
+
+        cmp r14, 8
+        je .lead_zeros
+        cmp r14, 16
+        je .lead_zeros
+
         jmp .exit
+
+.lead_zeros:
+        mov r13, r11
+        mov rcx, r8
+
+.find_non_zero:
+        cmp byte [buffer + r13], '0'
+        jne .copy_result
+        inc r13
+        dec rcx
+        jnz .find_non_zero
+
+.copy_result:
+        mov r9, r13
+        mov r13, r11
+.copy_loop:
+        mov al, [buffer + r9]
+        mov [buffer + r13], al
+        inc r9
+        inc r13
+        dec rcx
+        jge .copy_loop
+        mov r11, r13
 
 .exit:
         pop r12
@@ -323,100 +357,6 @@ GlobalConverter:
 
 ; ############################################################################
 
-
-
-;=============================================================================
-; Convert to Octal number
-; Entry:        dl = number
-;               r11 = buf_pos
-; Exit:
-; Destr: RDX, RAX, RCX                                                     !!!
-;=============================================================================
-ConvertOct:
-
-        mov rbx, rdx
-        mov r13, r11
-        xor rcx, rcx
-
-.positive:
-        xor rdx, rdx
-        mov rax, rbx
-        mov rbx, 8
-        div rbx                                         ; rax - quotient, rdx - remainder
-
-        mov rbx, rax
-        xor rax, rax
-        mov al, [digits + rdx]                          ; ASCII
-        mov [buffer + r13], al
-        inc rcx
-        inc r13
-
-        cmp rcx, 11
-        je .skip
-
-        cmp rbx, 0
-        jg .positive
-
-        xor rax, rax
-        xor rbx, rbx
-
-.skip:
-        push r13
-
-.turn_over:
-        cmp r11, r13
-        jge .exit
-
-        mov al, [buffer + r13 - 1]
-        mov bl, [buffer + r11]
-        mov [buffer + r13 - 1], bl
-        mov [buffer + r11], al
-
-        inc r11
-        dec r13
-        jmp .turn_over
-
-.exit:
-        pop r11
-
-        ret
-
-;=============================================================================
-; Convert to Binary number
-; Entry:        dl = number
-;               r11 = buf_pos
-; Exit:
-; Destr: RDX, RAX, RCX                                                     !!!
-;=============================================================================
-ConvertBin:
-
-        mov rcx, 31                                     ; 31 bites (0th bit - sign)
-
-        cmp rdx, 0
-        jng .convert
-
-;.find_first:
-;        mov rdx, rbx
-;        shr rdx, cl
-;        and rdx, 1
-;        cmp rdx, 1                                      ; find first 1 for leading zeros
-;        je .convert
-;        dec rcx
-;        cmp rcx, -1
-;        je .convert
-;        jmp .find_first
-
-.convert:
-        mov rax, rdx
-        shr rax, cl
-        and rax, 1
-        mov al, [digits + rax]                          ; ASCII
-        mov [buffer + r11], al
-        inc r11
-        dec rcx
-        jns .convert                                    ; checks SF flag (rcx = -1 -> SF = 1)
-
-        ret
 
 ;=============================================================================
 ; Convert Hex to good numbers
@@ -496,8 +436,6 @@ StrLen:
 
         ret
 
-
-
 section .data
 
 ASCII_NULL      equ  "0"
@@ -517,6 +455,8 @@ digits:         db      "0123456789ABCDEF"
 buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
 buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
 
+buffer_convert  times 12  db 0
+
 jump_table:
                         dq Binary
                         dq Char
@@ -527,10 +467,6 @@ jump_table:
                         dq String
  times ('x' - 's' - 1)  dq Error
                         dq Hexademical
-
-
-
-
 
 ; NOTE: tramplin - call -> jump
 ; ded checks %c, %s, jmptbl
