@@ -46,7 +46,7 @@
     46 00000018 4889E5                          mov rbp, rsp
     47 0000001B 488B7508                        mov rsi, [rbp + 8]
     48                                  
-    49 0000001F E84E030000                      call StrLen
+    49 0000001F E8A2030000                      call StrLen
     50                                  
     51 00000024 4C8B1C25[1E100000]              mov r11, [buf_position]
     52                                  
@@ -55,7 +55,7 @@
     55 00000032 483D00100000                    cmp rax, BUFFER_SIZE
     56 00000038 7E0D                            jle .continue
     57                                  
-    58 0000003A E8A8010000                      call FlushBuffer
+    58 0000003A E8AE010000                      call FlushBuffer
     59 0000003F C60425[1E100000]00              mov byte [buf_position], 0
     60                                  
     61                                  .continue:
@@ -70,14 +70,14 @@
     70 00000050 3C25                            cmp al, '%'
     71 00000052 741D                            je PercentHandler
     72                                  
-    73 00000054 E873010000                      call CharCopy
+    73 00000054 E879010000                      call CharCopy
     74 00000059 48FFC6                          inc rsi
     75 0000005C EBEC                            jmp next_parsing
     76                                  
     77                                  exit_parsing:
     78 0000005E 483D9A020000                    cmp rax, 666                                    ; if error code
     79 00000064 7405                            je .skip_flush
-    80 00000066 E87C010000                      call FlushBuffer
+    80 00000066 E882010000                      call FlushBuffer
     81                                  
     82                                  .skip_flush:
     83 0000006B 4889EC                          mov rsp, rbp
@@ -94,13 +94,13 @@
     94 0000007C 3C25                            cmp al, '%'
     95 0000007E 750D                            jne .skip_percent
     96                                  
-    97 00000080 E847010000                      call CharCopy
+    97 00000080 E84D010000                      call CharCopy
     98 00000085 48FFC6                          inc rsi
     99 00000088 49FFCC                          dec r12
    100 0000008B EBBD                            jmp next_parsing
    101                                  
    102                                  .skip_percent:
-   103 0000008D 488B04C5[220D0000]              mov rax, [jump_table + (rax - 'b')*8]
+   103 0000008D 488B04C5[160D0000]              mov rax, [jump_table + (rax - 'b')*8]
    104 00000095 FFE0                            jmp rax
    105                                  
    106                                  Error:
@@ -121,7 +121,7 @@
    120 000000C9 4A635CE508                      movsxd rbx, [rbp + 8 + r12*8]
    121 000000CE BF02000000                      mov rdi, 2
    122                                  
-   123 000000D3 E845010000                      call GlobalConverter
+   123 000000D3 E84B010000                      call GlobalConverter
    124                                  
    125 000000D8 49FFC3                          inc r11
    126 000000DB 48FFC6                          inc rsi
@@ -131,7 +131,7 @@
    130                                  Char:
    131 000000EB 4A6344E508                      movsxd rax, [rbp + 8 + r12*8]
    132                                  
-   133 000000F0 E8D7000000                      call CharCopy
+   133 000000F0 E8DD000000                      call CharCopy
    134                                  
    135 000000F5 48FFC6                          inc rsi
    136 000000F8 E94DFFFFFF                      jmp next_parsing
@@ -140,7 +140,7 @@
    139 000000FD 4C8B1C25[1E100000]              mov r11, [buf_position]
    140 00000105 4A6354E508                      movsxd rdx, dword [rbp + 8 + r12*8]             ; save my life... (int 32 bites)
    141                                  
-   142 0000010A E8F1010000                      call ConvertDec
+   142 0000010A E845020000                      call ConvertDec
    143                                  
    144 0000010F 48FFC6                          inc rsi
    145 00000112 4C891C25[1E100000]              mov [buf_position], r11
@@ -151,36 +151,36 @@
    150 00000127 428B5CE508                      mov ebx, [rbp + 8 + r12*8]
    151 0000012C BF08000000                      mov rdi, 8
    152                                  
-   153 00000131 E8E7000000                      call GlobalConverter
+   153 00000131 E8ED000000                      call GlobalConverter
    154                                  
    155 00000136 48FFC6                          inc rsi
-   156                                          ;inc r11
-   157 00000139 4C891C25[1E100000]              mov [buf_position], r11
-   158 00000141 E904FFFFFF                      jmp next_parsing
+   156 00000139 49FFC3                          inc r11
+   157 0000013C 4C891C25[1E100000]              mov [buf_position], r11
+   158 00000144 E901FFFFFF                      jmp next_parsing
    159                                  
    160                                  Hexademical:
-   161 00000146 4C8B1C25[1E100000]              mov r11, [buf_position]
-   162 0000014E 428B5CE508                      mov ebx, [rbp + 8 + r12*8]
-   163 00000153 BF10000000                      mov rdi, 16
+   161 00000149 4C8B1C25[1E100000]              mov r11, [buf_position]
+   162 00000151 428B5CE508                      mov ebx, [rbp + 8 + r12*8]
+   163 00000156 BF10000000                      mov rdi, 16
    164                                  
-   165 00000158 E8C0000000                      call GlobalConverter
+   165 0000015B E8C3000000                      call GlobalConverter
    166                                  
-   167 0000015D 48FFC6                          inc rsi
-   168                                          ;inc r11
-   169 00000160 4C891C25[1E100000]              mov [buf_position], r11
-   170 00000168 E9DDFEFFFF                      jmp next_parsing
+   167 00000160 48FFC6                          inc rsi
+   168 00000163 49FFC3                          inc r11
+   169 00000166 4C891C25[1E100000]              mov [buf_position], r11
+   170 0000016E E9D7FEFFFF                      jmp next_parsing
    171                                  
    172                                  String:
-   173 0000016D 4889F7                          mov rdi, rsi
-   174 00000170 4A8B74E508                      mov rsi, [rbp + 8 + r12*8]
-   175 00000175 8A06                            mov al, [rsi]
-   176 00000177 3C00                            cmp al, 0
-   177 00000179 0F8418FFFFFF                    je Error
+   173 00000173 4889F7                          mov rdi, rsi
+   174 00000176 4A8B74E508                      mov rsi, [rbp + 8 + r12*8]
+   175 0000017B 8A06                            mov al, [rsi]
+   176 0000017D 3C00                            cmp al, 0
+   177 0000017F 0F8412FFFFFF                    je Error
    178                                  
-   179 0000017F EB00                            jmp StringCopy
+   179 00000185 EB00                            jmp StringCopy
    180                                  
    181                                  ;=============================================================================
-   182                                  ; Copy string to buffer
+   182                                  ; Copy one symbol to buffer
    183                                  ; Entry:        rsi = address
    184                                  ;               r11 = buf_position
    185                                  ; Exit:
@@ -188,294 +188,361 @@
    187                                  ;=============================================================================
    188                                  StringCopy:
    189                                  
-   190 00000181 E8EC010000                      call StrLen
+   190 00000187 E83A020000                      call StrLen
    191                                  
-   192                                  
-   193 00000186 4C89D8                          mov rax, r11
-   194 00000189 4801C8                          add rax, rcx
-   195 0000018C 483D00100000                    cmp rax, BUFFER_SIZE
-   196 00000192 7E0D                            jle .continue
-   197                                  
-   198 00000194 E84E000000                      call FlushBuffer
-   199 00000199 C60425[1E100000]00              mov byte [buf_position], 0
-   200                                  
-   201                                  .continue:
-   202 000001A1 8A06                            mov al, [rsi]
-   203 000001A3 418883[1E000000]                mov [buffer + r11], al
-   204 000001AA 49FFC3                          inc r11
-   205 000001AD 48FFC9                          dec rcx
-   206 000001B0 48FFC6                          inc rsi
-   207 000001B3 4883F900                        cmp rcx, 0
-   208 000001B7 75E8                            jne .continue
-   209                                  
-   210 000001B9 4889FE                          mov rsi, rdi
-   211 000001BC 48FFC6                          inc rsi
-   212 000001BF 4C891C25[1E100000]              mov [buf_position], r11
-   213 000001C7 E97EFEFFFF                      jmp next_parsing
-   214                                  
-   215                                  ;=============================================================================
-   216                                  ; Copy one symbol to buffer
-   217                                  ; Entry:        al - symbol
-   218                                  ; Exit:
-   219                                  ; Destr: R11                                                               !!!
-   220                                  ;=============================================================================
-   221                                  CharCopy:
-   222                                  
-   223 000001CC 4C8B1C25[1E100000]              mov r11, [buf_position]
-   224 000001D4 418883[1E000000]                mov [buffer + r11], al
-   225 000001DB 49FFC3                          inc r11
-   226 000001DE 4C891C25[1E100000]              mov [buf_position], r11
-   227                                  
-   228 000001E6 C3                              ret
-   229                                  
-   230                                  ;=============================================================================
-   231                                  ; Func to Flush the Buffer
-   232                                  ; Entry:
-   233                                  ; Exit:
-   234                                  ; Destr: RAX, RDI, RSI, RDX                                                !!!
-   235                                  ;=============================================================================
-   236                                  FlushBuffer:
-   237                                  
-   238 000001E7 48833C25[1E100000]-             cmp qword [buf_position], 0
-   238 000001EF 00                 
-   239 000001F0 742A                            je .exit
-   240                                  
-   241 000001F2 B801000000                      mov rax, 1
-   242 000001F7 BF01000000                      mov rdi, 1
-   243 000001FC 48BE-                           mov rsi, buffer
-   243 000001FE [1E00000000000000] 
-   244 00000206 488B1425[1E100000]              mov rdx, [buf_position]
-   245 0000020E 0F05                            syscall
-   246                                  
-   247 00000210 48C70425[1E100000]-             mov qword [buf_position], 0
-   247 00000218 00000000           
-   248                                  
-   249                                  .exit:
-   250 0000021C C3                              ret
-   251                                  
-   252                                  ; ############################################################################
-   253                                  ; Enter:        rbx = 32 bit number
-   254                                  ;               rdi = base
-   255                                  ;               r11 = buf_position
-   256                                  ;
-   257                                  ; ============================================================================
-   258                                  GlobalConverter:
-   259                                  
-   260 0000021D 4154                            push r12
-   261                                  
-   262 0000021F 4989FE                          mov r14, rdi                                    ; base arg
-   263 00000222 4D89DD                          mov r13, r11                                    ; buf_position arg
-   264                                  
-   265 00000225 B920000000                      mov rcx, 32                                     ; base 2 : count of symbols
-   266 0000022A 41BF01000000                    mov r15, 1                                      ;          shift by 1 bit
-   267 00000230 B801000000                      mov rax, 1                                      ;          bit mask
-   268                                  
-   269 00000235 4983FE08                        cmp r14, 8
-   270 00000239 7512                            jne .check_base_16
-   271 0000023B B90B000000                      mov rcx, 11                                     ; base 8
-   272 00000240 41BF03000000                    mov r15, 3
-   273 00000246 B807000000                      mov rax, 0x7
-   274 0000024B EB16                            jmp .done
-   275                                  
-   276                                  .check_base_16:
-   277 0000024D 4983FE10                        cmp r14, 16
-   278 00000251 7510                            jne .done
-   279 00000253 B908000000                      mov rcx, 8
-   280 00000258 41BF04000000                    mov r15, 4
-   281 0000025E B80F000000                      mov rax, 0xF
-   282                                  
-   283                                  .done:
-   284 00000263 4901CD                          add r13, rcx
-   285 00000266 4989C8                          mov r8, rcx
-   286                                          ;mov r11, r13
-   287 00000269 4983FE08                        cmp r14, 8
-   288 0000026D 7423                            je .convert
-   289 0000026F 4983FE10                        cmp r14, 16
-   290 00000273 741D                            je .convert
-   291                                  
-   292                                  .find_first:
-   293 00000275 4889DA                          mov rdx, rbx
-   294 00000278 48D3EA                          shr rdx, cl
-   295 0000027B 4821C2                          and rdx, rax
-   296 0000027E 4883FA00                        cmp rdx, 0                                      ; find first 1 for leading zeros
-   297 00000282 750B                            jne .okak
-   298 00000284 48FFC9                          dec rcx
-   299 00000287 4883F9FF                        cmp rcx, -1
-   300 0000028B 7E02                            jle .okak
-   301 0000028D EBE6                            jmp .find_first
-   302                                  
-   303                                  .okak:
-   304 0000028F 4D01EB                          add r11, r13
+   192 0000018C 4C89D8                          mov rax, r11
+   193 0000018F 4801C8                          add rax, rcx
+   194 00000192 483D00100000                    cmp rax, BUFFER_SIZE
+   195 00000198 7E0D                            jle .continue
+   196                                  
+   197 0000019A E84E000000                      call FlushBuffer
+   198 0000019F C60425[1E100000]00              mov byte [buf_position], 0
+   199                                  
+   200                                  .continue:
+   201 000001A7 8A06                            mov al, [rsi]
+   202 000001A9 418883[1E000000]                mov [buffer + r11], al
+   203 000001B0 49FFC3                          inc r11
+   204 000001B3 48FFC9                          dec rcx
+   205 000001B6 48FFC6                          inc rsi
+   206 000001B9 4883F900                        cmp rcx, 0
+   207 000001BD 75E8                            jne .continue
+   208                                  
+   209 000001BF 4889FE                          mov rsi, rdi
+   210 000001C2 48FFC6                          inc rsi
+   211 000001C5 4C891C25[1E100000]              mov [buf_position], r11
+   212 000001CD E978FEFFFF                      jmp next_parsing
+   213                                  
+   214                                  ;=============================================================================
+   215                                  ; Copy one symbol to buffer
+   216                                  ; Entry:        al - symbol
+   217                                  ; Exit:
+   218                                  ; Destr: R11                                                               !!!
+   219                                  ;=============================================================================
+   220                                  CharCopy:
+   221                                  
+   222 000001D2 4C8B1C25[1E100000]              mov r11, [buf_position]
+   223 000001DA 418883[1E000000]                mov [buffer + r11], al
+   224 000001E1 49FFC3                          inc r11
+   225 000001E4 4C891C25[1E100000]              mov [buf_position], r11
+   226                                  
+   227 000001EC C3                              ret
+   228                                  
+   229                                  ;=============================================================================
+   230                                  ; Func to Flush the Buffer
+   231                                  ; Entry:
+   232                                  ; Exit:
+   233                                  ; Destr: RAX, RDI, RSI, RDX                                                !!!
+   234                                  ;=============================================================================
+   235                                  FlushBuffer:
+   236                                  
+   237 000001ED 48833C25[1E100000]-             cmp qword [buf_position], 0
+   237 000001F5 00                 
+   238 000001F6 742A                            je .exit
+   239                                  
+   240 000001F8 B801000000                      mov rax, 1
+   241 000001FD BF01000000                      mov rdi, 1
+   242 00000202 48BE-                           mov rsi, buffer
+   242 00000204 [1E00000000000000] 
+   243 0000020C 488B1425[1E100000]              mov rdx, [buf_position]
+   244 00000214 0F05                            syscall
+   245                                  
+   246 00000216 48C70425[1E100000]-             mov qword [buf_position], 0
+   246 0000021E 00000000           
+   247                                  
+   248                                  .exit:
+   249 00000222 C3                              ret
+   250                                  
+   251                                  ; ############################################################################
+   252                                  ; Enter:        rbx = 32 bit number
+   253                                  ;               rdi = base
+   254                                  ;               r11 = buf_position
+   255                                  ;
+   256                                  ; ============================================================================
+   257                                  GlobalConverter:
+   258                                  
+   259 00000223 4154                            push r12
+   260                                  
+   261 00000225 4989FE                          mov r14, rdi                                    ; base arg
+   262 00000228 4D89DD                          mov r13, r11                                    ; buf_position arg
+   263                                  
+   264                                  ;        cmp r14, 10
+   265                                  ;        je .base_10
+   266 0000022B B920000000                      mov rcx, 32
+   267 00000230 41B820000000                    mov r8, 32                                     ; base 2 : count of symbols
+   268 00000236 41BF01000000                    mov r15, 1                                      ;          shift by 1 bit
+   269 0000023C B801000000                      mov rax, 1                                      ;          bit mask
+   270                                  
+   271 00000241 4983FE08                        cmp r14, 8
+   272 00000245 7513                            jne .check_base_16
+   273 00000247 41B80B000000                    mov r8, 11                                     ; base 8
+   274 0000024D 41BF03000000                    mov r15, 3
+   275 00000253 B807000000                      mov rax, 0x7
+   276 00000258 EB17                            jmp .done
+   277                                  
+   278                                  .check_base_16:
+   279 0000025A 4983FE10                        cmp r14, 16
+   280 0000025E 7511                            jne .done
+   281 00000260 41B808000000                    mov r8, 8
+   282 00000266 41BF04000000                    mov r15, 4
+   283 0000026C B80F000000                      mov rax, 0xF
+   284                                  
+   285                                  .done:
+   286                                          ;dec r8
+   287                                          ;mov r12, r8
+   288                                          ;add r13, r12
+   289                                          ;mov r11, r13
+   290                                  
+   291 00000271 4983FE08                        cmp r14, 8
+   292 00000275 7504                            jne .find_first
+   293 00000277 4883C101                        add rcx, 1
+   294                                  
+   295                                  .find_first:
+   296 0000027B 4C29F9                          sub rcx, r15
+   297 0000027E 4889DA                          mov rdx, rbx
+   298 00000281 48D3EA                          shr rdx, cl
+   299 00000284 4821C2                          and rdx, rax
+   300 00000287 83FA00                          cmp edx, 0                                      ; find first 1 for leading zeros
+   301 0000028A 7508                            jne .convert
+   302 0000028C 4883F9FF                        cmp rcx, -1
+   303 00000290 7E02                            jle .convert
+   304 00000292 EBE7                            jmp .find_first
    305                                  
    306                                  .convert:
-   307 00000292 51                              push rcx
+   307 00000294 51                              push rcx
    308                                  
-   309 00000293 4889DA                          mov rdx, rbx
-   310 00000296 4821C2                          and rdx, rax
-   311                                  
-   312 00000299 8A8A[0E000000]                  mov cl, [digits + rdx]                          ; ASCII
-   313 0000029F 41888D[1E000000]                mov [buffer + r13], cl
-   314                                  
-   315 000002A6 4488F9                          mov cl, r15b
-   316 000002A9 48D3EB                          shr rbx, cl
-   317 000002AC 49FFCD                          dec r13
-   318                                  
-   319 000002AF 59                              pop rcx
-   320 000002B0 48FFC9                          dec rcx
-   321                                  
-   322 000002B3 7DDD                            jge .convert
-   323                                  
-   324 000002B5 4983FE08                        cmp r14, 8
-   325 000002B9 7408                            je .lead_zeros
-   326 000002BB 4983FE10                        cmp r14, 16
-   327 000002BF 7402                            je .lead_zeros
+   309 00000295 4889DA                          mov rdx, rbx
+   310 00000298 48D3EA                          shr rdx, cl
+   311 0000029B 4821C2                          and rdx, rax
+   312                                  
+   313 0000029E 8A8A[0E000000]                  mov cl, [digits + rdx]                          ; ASCII
+   314 000002A4 41888B[1E000000]                mov [buffer + r11], cl
+   315                                  
+   316 000002AB 49FFC3                          inc r11
+   317 000002AE 59                              pop rcx
+   318 000002AF 4C29F9                          sub rcx, r15
+   319                                  
+   320 000002B2 7DE0                            jge .convert
+   321 000002B4 EB00                            jmp .exit
+   322                                  
+   323                                  .exit:
+   324 000002B6 415C                            pop r12
+   325 000002B8 C3                              ret
+   326                                  
+   327                                  ; ############################################################################
    328                                  
-   329 000002C1 EB3A                            jmp .exit
+   329                                  
    330                                  
-   331                                  .lead_zeros:
-   332 000002C3 4D89DD                          mov r13, r11
-   333 000002C6 4C89C1                          mov rcx, r8
-   334                                  
-   335                                  .find_non_zero:
-   336 000002C9 4180BD[1E000000]30              cmp byte [buffer + r13], '0'
-   337 000002D1 7508                            jne .copy_result
-   338 000002D3 49FFC5                          inc r13
-   339 000002D6 48FFC9                          dec rcx
-   340 000002D9 75EE                            jnz .find_non_zero
-   341                                  
-   342                                  .copy_result:
-   343 000002DB 4D89E9                          mov r9, r13
-   344 000002DE 4D89DD                          mov r13, r11
-   345                                  .copy_loop:
-   346 000002E1 418A81[1E000000]                mov al, [buffer + r9]
-   347 000002E8 418885[1E000000]                mov [buffer + r13], al
-   348 000002EF 49FFC1                          inc r9
-   349 000002F2 49FFC5                          inc r13
-   350 000002F5 48FFC9                          dec rcx
-   351 000002F8 7DE7                            jge .copy_loop
-   352 000002FA 4D89EB                          mov r11, r13
-   353                                  
-   354                                  .exit:
-   355 000002FD 415C                            pop r12
-   356 000002FF C3                              ret
-   357                                  
-   358                                  ; ############################################################################
+   331                                  ;=============================================================================
+   332                                  ; Convert to Octal number
+   333                                  ; Entry:        dl = number
+   334                                  ;               r11 = buf_pos
+   335                                  ; Exit:
+   336                                  ; Destr: RDX, RAX, RCX                                                     !!!
+   337                                  ;=============================================================================
+   338                                  ConvertOct:
+   339                                  
+   340 000002B9 4889D3                          mov rbx, rdx
+   341 000002BC 4D89DD                          mov r13, r11
+   342 000002BF 4831C9                          xor rcx, rcx
+   343                                  
+   344                                  .positive:
+   345 000002C2 4831D2                          xor rdx, rdx
+   346 000002C5 4889D8                          mov rax, rbx
+   347 000002C8 BB08000000                      mov rbx, 8
+   348 000002CD 48F7F3                          div rbx                                         ; rax - quotient, rdx - remainder
+   349                                  
+   350 000002D0 4889C3                          mov rbx, rax
+   351 000002D3 4831C0                          xor rax, rax
+   352 000002D6 8A82[0E000000]                  mov al, [digits + rdx]                          ; ASCII
+   353 000002DC 418885[1E000000]                mov [buffer + r13], al
+   354 000002E3 48FFC1                          inc rcx
+   355 000002E6 49FFC5                          inc r13
+   356                                  
+   357 000002E9 4883F90B                        cmp rcx, 11
+   358 000002ED 740C                            je .skip
    359                                  
-   360                                  
-   361                                  ;=============================================================================
-   362                                  ; Convert Hex to good numbers
-   363                                  ; Entry:        dl = number
-   364                                  ;               r11 = buf_pos
-   365                                  ; Exit:
-   366                                  ; Destr: RBX, RAX, RCX, RDX                                                !!!
-   367                                  ;=============================================================================
-   368                                  ConvertDec:
-   369                                  
-   370 00000300 4889D3                          mov rbx, rdx
-   371                                  
-   372 00000303 4D89DD                          mov r13, r11
-   373 00000306 4883FB00                        cmp rbx, 0
-   374 0000030A 7D11                            jge .positive                                   ; >= 0
-   375                                  
-   376 0000030C 41C685[1E000000]2D              mov byte [buffer + r13], '-'
-   377 00000314 49FFC5                          inc r13
-   378 00000317 49FFC3                          inc r11
-   379 0000031A 48F7DB                          neg rbx
-   380                                  
-   381                                  .positive:
-   382 0000031D 4831D2                          xor rdx, rdx
-   383 00000320 4889D8                          mov rax, rbx
-   384 00000323 BB0A000000                      mov rbx, 10
-   385 00000328 48F7F3                          div rbx                                         ; rax - quotient, rdx - remainder
+   360 000002EF 4883FB00                        cmp rbx, 0
+   361 000002F3 7FCD                            jg .positive
+   362                                  
+   363 000002F5 4831C0                          xor rax, rax
+   364 000002F8 4831DB                          xor rbx, rbx
+   365                                  
+   366                                  .skip:
+   367 000002FB 4155                            push r13
+   368                                  
+   369                                  .turn_over:
+   370 000002FD 4D39EB                          cmp r11, r13
+   371 00000300 7D24                            jge .exit
+   372                                  
+   373 00000302 418A85[1D000000]                mov al, [buffer + r13 - 1]
+   374 00000309 418A9B[1E000000]                mov bl, [buffer + r11]
+   375 00000310 41889D[1D000000]                mov [buffer + r13 - 1], bl
+   376 00000317 418883[1E000000]                mov [buffer + r11], al
+   377                                  
+   378 0000031E 49FFC3                          inc r11
+   379 00000321 49FFCD                          dec r13
+   380 00000324 EBD7                            jmp .turn_over
+   381                                  
+   382                                  .exit:
+   383 00000326 415B                            pop r11
+   384                                  
+   385 00000328 C3                              ret
    386                                  
-   387 0000032B 4889C3                          mov rbx, rax
-   388 0000032E 8A82[0E000000]                  mov al, [digits + rdx]                          ; ASCII
-   389 00000334 418885[1E000000]                mov [buffer + r13], al
-   390 0000033B 49FFC5                          inc r13
-   391 0000033E 4883FB00                        cmp rbx, 0
-   392 00000342 7FD9                            jg .positive                                    ; signed greater
-   393                                  
-   394 00000344 4155                            push r13
+   387                                  ;=============================================================================
+   388                                  ; Convert to Binary number
+   389                                  ; Entry:        dl = number
+   390                                  ;               r11 = buf_pos
+   391                                  ; Exit:
+   392                                  ; Destr: RDX, RAX, RCX                                                     !!!
+   393                                  ;=============================================================================
+   394                                  ConvertBin:
    395                                  
-   396                                  .turn_over:
-   397 00000346 4D39EB                          cmp r11, r13
-   398 00000349 7D24                            jge .exit
-   399                                  
-   400 0000034B 418A85[1D000000]                mov al, [buffer + r13 - 1]
-   401 00000352 418A9B[1E000000]                mov bl, [buffer + r11]
-   402 00000359 41889D[1D000000]                mov [buffer + r13 - 1], bl
-   403 00000360 418883[1E000000]                mov [buffer + r11], al
-   404                                  
-   405 00000367 49FFC3                          inc r11
-   406 0000036A 49FFCD                          dec r13
-   407 0000036D EBD7                            jmp .turn_over
-   408                                  
-   409                                  .exit:
-   410 0000036F 415B                            pop r11
+   396 00000329 B91F000000                      mov rcx, 31                                     ; 31 bites (0th bit - sign)
+   397                                  
+   398 0000032E 4883FA00                        cmp rdx, 0
+   399 00000332 7E00                            jng .convert
+   400                                  
+   401                                  ;.find_first:
+   402                                  ;        mov rdx, rbx
+   403                                  ;        shr rdx, cl
+   404                                  ;        and rdx, 1
+   405                                  ;        cmp rdx, 1                                      ; find first 1 for leading zeros
+   406                                  ;        je .convert
+   407                                  ;        dec rcx
+   408                                  ;        cmp rcx, -1
+   409                                  ;        je .convert
+   410                                  ;        jmp .find_first
    411                                  
-   412 00000371 C3                              ret
-   413                                  
-   414                                  ;=============================================================================
-   415                                  ; Count length of string
-   416                                  ; Entry:        rsi = string offset
-   417                                  ; Exit:         rcx = length of string
-   418                                  ; Destr: AL                                                                !!!
-   419                                  ;=============================================================================
-   420                                  StrLen:
+   412                                  .convert:
+   413 00000334 4889D0                          mov rax, rdx
+   414 00000337 48D3E8                          shr rax, cl
+   415 0000033A 4883E001                        and rax, 1
+   416 0000033E 8A80[0E000000]                  mov al, [digits + rax]                          ; ASCII
+   417 00000344 418883[1E000000]                mov [buffer + r11], al
+   418 0000034B 49FFC3                          inc r11
+   419 0000034E 48FFC9                          dec rcx
+   420 00000351 79E1                            jns .convert                                    ; checks SF flag (rcx = -1 -> SF = 1)
    421                                  
-   422 00000372 53                              push rbx
-   423 00000373 4889F3                          mov rbx, rsi
-   424 00000376 4831C9                          xor rcx, rcx
-   425                                  .cycle:
-   426 00000379 8A03                            mov al, [rbx]
-   427 0000037B 3C00                            cmp al, 0
-   428 0000037D 7407                            je .match
-   429                                  
-   430 0000037F FEC1                            inc cl
-   431 00000381 48FFC3                          inc rbx
-   432 00000384 EBF3                            jmp .cycle
-   433                                  
-   434                                  .match:
-   435 00000386 5B                              pop rbx
-   436                                  
-   437 00000387 C3                              ret
+   422 00000353 C3                              ret
+   423                                  
+   424                                  ;=============================================================================
+   425                                  ; Convert Hex to good numbers
+   426                                  ; Entry:        dl = number
+   427                                  ;               r11 = buf_pos
+   428                                  ; Exit:
+   429                                  ; Destr: RBX, RAX, RCX, RDX                                                !!!
+   430                                  ;=============================================================================
+   431                                  ConvertDec:
+   432                                  
+   433 00000354 4889D3                          mov rbx, rdx
+   434                                  
+   435 00000357 4D89DD                          mov r13, r11
+   436 0000035A 4883FB00                        cmp rbx, 0
+   437 0000035E 7D11                            jge .positive                                   ; >= 0
    438                                  
-   439                                  section .data
-   440                                  
-   441                                  ASCII_NULL      equ  "0"
-   442                                  ASCII_NINE      equ  "9"
-   443                                  ASCII_A         equ  "A"
-   444                                  ASCII_F         equ  "F"
-   445                                  ASCII_SPACE     equ  " "
-   446                                  ASCII_SL_N      equ  0Ah
-   447                                  ASCII_SL_R      equ  0Dh
-   448                                  
-   449                                  BUFFER_SIZE     equ  4096                               ; Linux page memory size
-   450                                  
-   451 00000000 53796E746178206572-     ErrorMessage    db      "Syntax error!", 0xA
-   451 00000009 726F72210A         
-   452                                  ErrorMessageLen equ      $ - ErrorMessage
-   453                                  
-   454 0000000E 303132333435363738-     digits:         db      "0123456789ABCDEF"
-   454 00000017 39414243444546     
-   455 0000001E 00<rep 1000h>           buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
-   456 0000101E 0000000000000000        buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
-   457                                  
-   458 00001026 00<rep Ch>              buffer_convert  times 12  db 0
-   459                                  
-   460                                  jump_table:
-   461 00001032 [C100000000000000]                              dq Binary
-   462 0000103A [EB00000000000000]                              dq Char
-   463 00001042 [FD00000000000000]                              dq Decimal
-   464 0000104A [9700000000000000]-      times ('o' - 'd' - 1)  dq Error
-   464 0000104A <rep Ah>           
-   465 0000109A [1F01000000000000]                              dq Octal
-   466 000010A2 [9700000000000000]-      times ('s' - 'o' - 1)  dq Error
-   466 000010A2 <rep 3h>           
-   467 000010BA [6D01000000000000]                              dq String
-   468 000010C2 [9700000000000000]-      times ('x' - 's' - 1)  dq Error
-   468 000010C2 <rep 4h>           
-   469 000010E2 [4601000000000000]                              dq Hexademical
-   470                                  
-   471                                  ; NOTE: tramplin - call -> jump
-   472                                  ; ded checks %c, %s, jmptbl
+   439 00000360 41C685[1E000000]2D              mov byte [buffer + r13], '-'
+   440 00000368 49FFC5                          inc r13
+   441 0000036B 49FFC3                          inc r11
+   442 0000036E 48F7DB                          neg rbx
+   443                                  
+   444                                  .positive:
+   445 00000371 4831D2                          xor rdx, rdx
+   446 00000374 4889D8                          mov rax, rbx
+   447 00000377 BB0A000000                      mov rbx, 10
+   448 0000037C 48F7F3                          div rbx                                         ; rax - quotient, rdx - remainder
+   449                                  
+   450 0000037F 4889C3                          mov rbx, rax
+   451 00000382 8A82[0E000000]                  mov al, [digits + rdx]                          ; ASCII
+   452 00000388 418885[1E000000]                mov [buffer + r13], al
+   453 0000038F 49FFC5                          inc r13
+   454 00000392 4883FB00                        cmp rbx, 0
+   455 00000396 7FD9                            jg .positive                                    ; signed greater
+   456                                  
+   457 00000398 4155                            push r13
+   458                                  
+   459                                  .turn_over:
+   460 0000039A 4D39EB                          cmp r11, r13
+   461 0000039D 7D24                            jge .exit
+   462                                  
+   463 0000039F 418A85[1D000000]                mov al, [buffer + r13 - 1]
+   464 000003A6 418A9B[1E000000]                mov bl, [buffer + r11]
+   465 000003AD 41889D[1D000000]                mov [buffer + r13 - 1], bl
+   466 000003B4 418883[1E000000]                mov [buffer + r11], al
+   467                                  
+   468 000003BB 49FFC3                          inc r11
+   469 000003BE 49FFCD                          dec r13
+   470 000003C1 EBD7                            jmp .turn_over
+   471                                  
+   472                                  .exit:
+   473 000003C3 415B                            pop r11
+   474                                  
+   475 000003C5 C3                              ret
+   476                                  
+   477                                  ;=============================================================================
+   478                                  ; Count length of string
+   479                                  ; Entry:        rsi = string offset
+   480                                  ; Exit:         rcx = length of string
+   481                                  ; Destr: AL                                                                !!!
+   482                                  ;=============================================================================
+   483                                  StrLen:
+   484                                  
+   485 000003C6 53                              push rbx
+   486 000003C7 4889F3                          mov rbx, rsi
+   487 000003CA 4831C9                          xor rcx, rcx
+   488                                  .cycle:
+   489 000003CD 8A03                            mov al, [rbx]
+   490 000003CF 3C00                            cmp al, 0
+   491 000003D1 7407                            je .match
+   492                                  
+   493 000003D3 FEC1                            inc cl
+   494 000003D5 48FFC3                          inc rbx
+   495 000003D8 EBF3                            jmp .cycle
+   496                                  
+   497                                  .match:
+   498 000003DA 5B                              pop rbx
+   499                                  
+   500 000003DB C3                              ret
+   501                                  
+   502                                  
+   503                                  
+   504                                  section .data
+   505                                  
+   506                                  ASCII_NULL      equ  "0"
+   507                                  ASCII_NINE      equ  "9"
+   508                                  ASCII_A         equ  "A"
+   509                                  ASCII_F         equ  "F"
+   510                                  ASCII_SPACE     equ  " "
+   511                                  ASCII_SL_N      equ  0Ah
+   512                                  ASCII_SL_R      equ  0Dh
+   513                                  
+   514                                  BUFFER_SIZE     equ  4096                               ; Linux page memory size
+   515                                  
+   516 00000000 53796E746178206572-     ErrorMessage    db      "Syntax error!", 0xA
+   516 00000009 726F72210A         
+   517                                  ErrorMessageLen equ      $ - ErrorMessage
+   518                                  
+   519 0000000E 303132333435363738-     digits:         db      "0123456789ABCDEF"
+   519 00000017 39414243444546     
+   520 0000001E 00<rep 1000h>           buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
+   521 0000101E 0000000000000000        buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
+   522                                  
+   523                                  jump_table:
+   524 00001026 [C100000000000000]                              dq Binary
+   525 0000102E [EB00000000000000]                              dq Char
+   526 00001036 [FD00000000000000]                              dq Decimal
+   527 0000103E [9700000000000000]-      times ('o' - 'd' - 1)  dq Error
+   527 0000103E <rep Ah>           
+   528 0000108E [1F01000000000000]                              dq Octal
+   529 00001096 [9700000000000000]-      times ('s' - 'o' - 1)  dq Error
+   529 00001096 <rep 3h>           
+   530 000010AE [7301000000000000]                              dq String
+   531 000010B6 [9700000000000000]-      times ('x' - 's' - 1)  dq Error
+   531 000010B6 <rep 4h>           
+   532 000010D6 [4901000000000000]                              dq Hexademical
+   533                                  
+   534                                  
+   535                                  
+   536                                  
+   537                                  
+   538                                  ; NOTE: tramplin - call -> jump
+   539                                  ; ded checks %c, %s, jmptbl
