@@ -5,6 +5,7 @@
 ; | <---------------------------------------------> |
 ; |=================================================|
 
+%include "macros.inc"
 section .text
 
 global MyPrintf
@@ -12,24 +13,12 @@ global MyPrintf
 MyPrintf:
 
         pop r10                                         ; return address
-
-        push r9                                         ; 6th argument
-        push r8                                         ; 5th
-        push rcx                                        ; 4th
-        push rdx                                        ; 3th
-        push rsi                                        ; 2th
-        push rdi                                        ; 1th
+        pushs r9, r8, rcx, rdx, rsi, rdi
 
         jmp Parsing
 
 return:
-        pop rdi
-        pop rsi
-        pop rdx
-        pop rcx
-        pop r8
-        pop r9
-
+        pops rdi, rsi, rdx, rcx, r8, r9
         push r10
 
         ret
@@ -268,28 +257,19 @@ GlobalConverter:
         mov r15, 1                                      ;          shift by 1 bit
         mov rax, 1                                      ;          bit mask
 
-        cmp r14, 8
-        jne .check_base_16
-        mov r8, 11                                     ; base 8
-        mov r15, 3
-        mov rax, 0x7
-        jmp .done
-
-.check_base_16:
         cmp r14, 16
-        jne .done
+        jne .check_base_8
         mov r8, 8
         mov r15, 4
         mov rax, 0xF
+        jmp .find_first
 
-.done:
-        ;dec r8
-        ;mov r12, r8
-        ;add r13, r12
-        ;mov r11, r13
-
+.check_base_8:
         cmp r14, 8
         jne .find_first
+        mov r8, 11                                     ; base 8
+        mov r15, 3
+        mov rax, 0x7
         add rcx, 1
 
 .find_first:
@@ -516,7 +496,7 @@ BUFFER_SIZE     equ  4096                               ; Linux page memory size
 ErrorMessage    db      "Syntax error!", 0xA
 ErrorMessageLen equ      $ - ErrorMessage
 
-digits:         db      "0123456789ABCDEF"
+digits:         db      "0123456789abcdef"
 buffer          times BUFFER_SIZE  db  0                ; BUFFER_SIZE times 0 byte
 buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
 

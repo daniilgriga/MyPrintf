@@ -6,11 +6,11 @@ extern int MyPrintf (const char* a, ...);
 
 int main (void)
 {
-    int result = MyPrintf ("\n" "greeting = '%s'." "\n 123 %%d: '%d'\n 123 %%b: '%b'\n 123 %%o: '%o'\n 123 %%x: '%x'" "\n",
-                                "sup man, thats your debug:", 123, 123, 123, 123);
+    int result = MyPrintf ("\n" "greeting = '%s'." "\n 3802 %%d: '%d'\n 3802 %%b: '%b'\n 3802 %%o: '%o'\n 3802 %%x: '%x'" "\n",
+                                "sup man, thats your debug:", 3802, 3802, 3802, 3802);
     if (result == 666)
         fprintf (stderr,RED_TEXT(" Error in ") PURPLE_TEXT("%s: %d") "\n", __FILE__, __LINE__ - 2);
 
-    fprintf (stderr, "REAL PRINTF:\n 123 %%d: '%d'\n 123 %%b: '%b'\n 123 %%o: '%o'\n 123 %%x: '%x'" "\n", 123, 123, 123, 123);
+    fprintf (stderr, "REAL PRINTF:\n 3802 %%d: '%d'\n 3802 %%b: '%b'\n 3802 %%o: '%o'\n 3802 %%x: '%x'" "\n", 3802, 3802, 3802, 3802);
     return 0;
 }

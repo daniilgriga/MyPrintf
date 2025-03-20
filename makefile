@@ -5,7 +5,7 @@ program:
 	make all
 
 asm:
-	nasm -g -f elf64 -l build/printf.lst -o build/MyPrintf.o src/MyPrintf.s
+	nasm -g -f elf64 -I include/ -l build/printf.lst -o build/MyPrintf.o src/MyPrintf.s
 
 main:
 	gcc -g -I./include -c src/main.c -o build/main.o
