@@ -226,26 +226,26 @@ FlushBuffer:
 ;=============================================================================          ;|-------|---------------------------------------------|
 Converter:                                                                              ;|  r11  |              buffer position                |
         push r12                                                                        ;|-------|---------------------------------------------|
-        mov r14, rdi                                                                    ;|  r8   |             count of symbols                |
-        mov rcx, 32                                                                     ;|-------|---------------------------------------------|
-        mov r8, 32
-        mov r15, 1
-        mov rax, 1
-; // FIXME no ifs
-        cmp r14, 16
-        jne .check_base_8
-        mov r8, 8
-        mov r15, 4
-        mov rax, 0xF
-        jmp .find_first
+        mov r14, rdi
 
-.check_base_8:
-        cmp r14, 8
+        xor rcx, rcx
+        mov rax, 1
+
+.count_n_bits:
+        cmp rax, r14
+        je .find_bit_mask
+        inc rcx
+        shl rax, 1
+        jmp .count_n_bits
+
+.find_bit_mask:
+        mov r15, rcx                                    ; numb bits for one symb
+        dec rax                                         ; bit mask
+
+        mov rcx, 32
+        cmp rdi, 8
         jne .find_first
-        mov r8, 11
-        mov r15, 3
-        mov rax, 0x7
-        add rcx, 1
+        inc rcx
 
 .find_first:
         sub rcx, r15
@@ -261,12 +261,12 @@ Converter:                                                                      
 .convert:
 
         cmp r11, BUFFER_SIZE
-        jne .asdf
+        jne .skip_flush
         mov qword [buf_position], r11
         call FlushBuffer
         xor r11, r11
 
-.asdf:
+.skip_flush:
         push rcx
         mov rdx, rbx
         shr rdx, cl
