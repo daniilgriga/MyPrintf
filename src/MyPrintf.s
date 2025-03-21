@@ -37,18 +37,6 @@ Parsing:
         mov rbp, rsp
         mov rsi, [rbp + 16]
 
-        call StrLen
-
-        mov r11, [buf_position]
-
-        mov rax, r11                                    ;
-        add rax, rcx                                    ; checks
-        cmp rax, BUFFER_SIZE                            ; if buffer + string > BUFFER_SIZE ->
-        jle .continue                                   ;
-        call FlushBuffer                                ; -> flush buffer
-        mov byte [buf_position], 0                      ;
-
-.continue:
         xor r12, r12
 
 next_parsing:
@@ -60,7 +48,7 @@ next_parsing:
         cmp al, '%'
         je PercentHandler
 
-        call CharCopy
+        CharCopy
         inc rsi
         jmp next_parsing
 
@@ -77,19 +65,25 @@ exit_parsing:
 PercentHandler:
         inc r12
         inc rsi
-        xor rax, rax                                    ; arg must be > '%' and < 'x'
+        xor rax, rax
 
         mov al, [rsi]
 
         cmp al, '%'
         jne .skip_percent
 
-        call CharCopy
+        CharCopy
         inc rsi
         dec r12
         jmp next_parsing
 
 .skip_percent:
+        cmp al, 'b'
+        jb Error
+
+        cmp al, 'x'
+        ja Error
+
         mov rax, [jump_table + (rax - 'b')*8]
         jmp rax
 
@@ -112,7 +106,6 @@ Binary:
 
         call Converter
 
-        inc r11
         inc rsi
         mov [buf_position], r11
         jmp next_parsing
@@ -120,7 +113,7 @@ Binary:
 Char:
         movsxd rax, [rbp + 16 + r12*8]
 
-        call CharCopy
+        CharCopy
 
         inc rsi
         jmp next_parsing
@@ -143,7 +136,6 @@ Octal:
         call Converter
 
         inc rsi
-        inc r11
         mov [buf_position], r11
         jmp next_parsing
 
@@ -155,7 +147,6 @@ Hexademical:
         call Converter
 
         inc rsi
-        inc r11
         mov [buf_position], r11
         jmp next_parsing
 
@@ -178,43 +169,26 @@ String:
 ;=============================================================================
 StringCopy:
 
-        call StrLen
-
-        mov rax, r11
-        add rax, rcx
-        cmp rax, BUFFER_SIZE
-        jle .continue
-
+.copy:
+        cmp r11, BUFFER_SIZE
+        jne .skip
+        mov qword [buf_position], r11
         call FlushBuffer
-        mov byte [buf_position], 0
+        xor r11, r11
 
-.continue:
+.skip:
         mov al, [rsi]
         mov [buffer + r11], al
+
         inc r11
         dec rcx
         inc rsi
-        cmp rcx, 0
-        jne .continue
+        cmp al, 0
+        jne .copy
 
         mov rsi, rdi
         inc rsi
         mov [buf_position], r11
-        ret
-
-;=============================================================================
-; Copy one symbol to buffer
-; Entry:        al - symbol
-; Exit:
-; Destr: R11                                                               !!!
-;=============================================================================
-CharCopy:
-
-        mov r11, [buf_position]
-        mov [buffer + r11], al
-        inc r11
-        mov [buf_position], r11
-
         ret
 
 ;=============================================================================
@@ -228,6 +202,8 @@ FlushBuffer:
         cmp qword [buf_position], 0
         je .exit
 
+        pushs r11, rcx, rax, rdi, rsi, rdx
+
         mov rax, 1
         mov rdi, 1
         mov rsi, buffer
@@ -235,6 +211,8 @@ FlushBuffer:
         syscall
 
         mov qword [buf_position], 0
+
+        pops rdx, rsi, rdi, rax, rcx, r11
 
 .exit:
         ret
@@ -253,7 +231,7 @@ Converter:                                                                      
         mov r8, 32
         mov r15, 1
         mov rax, 1
-
+; // FIXME no ifs
         cmp r14, 16
         jne .check_base_8
         mov r8, 8
@@ -281,8 +259,15 @@ Converter:                                                                      
         jmp .find_first
 
 .convert:
-        push rcx
 
+        cmp r11, BUFFER_SIZE
+        jne .asdf
+        mov qword [buf_position], r11
+        call FlushBuffer
+        xor r11, r11
+
+.asdf:
+        push rcx
         mov rdx, rbx
         shr rdx, cl
         and rdx, rax
@@ -354,31 +339,6 @@ ConvertDec:
 
         ret
 
-;=============================================================================
-; Count length of string
-; Entry:        rsi = string offset
-; Exit:         rcx = length of string
-; Destr: AL                                                                !!!
-;=============================================================================
-StrLen:
-
-        push rbx
-        mov rbx, rsi
-        xor rcx, rcx
-.cycle:
-        mov al, [rbx]
-        cmp al, 0
-        je .match
-
-        inc cl
-        inc rbx
-        jmp .cycle
-
-.match:
-        pop rbx
-
-        ret
-
 
 section .data
 
@@ -390,7 +350,7 @@ ASCII_SPACE     equ  " "
 ASCII_SL_N      equ  0Ah
 ASCII_SL_R      equ  0Dh
 
-BUFFER_SIZE     equ  4096                               ; Linux page memory size (4096 bytes)
+BUFFER_SIZE     equ  102                               ; Linux page memory size (4096 bytes)
 
 ErrorMessage    db      "Syntax error!", 0xA
 ErrorMessageLen equ      $ - ErrorMessage
