@@ -195,7 +195,7 @@ StringCopy:
 ; Func to Flush the Buffer
 ; Entry:
 ; Exit:
-; Destr: RAX, RDI, RSI, RDX                                                !!!
+; Destr: only buf_position                                                 !!!
 ;=============================================================================
 FlushBuffer:
 
@@ -259,7 +259,6 @@ Converter:                                                                      
         jmp .find_first
 
 .convert:
-
         cmp r11, BUFFER_SIZE
         jne .skip_flush
         mov qword [buf_position], r11
@@ -341,14 +340,6 @@ ConvertDec:
 
 
 section .data
-
-ASCII_NULL      equ  "0"
-ASCII_NINE      equ  "9"
-ASCII_A         equ  "A"
-ASCII_F         equ  "F"
-ASCII_SPACE     equ  " "
-ASCII_SL_N      equ  0Ah
-ASCII_SL_R      equ  0Dh
 
 BUFFER_SIZE     equ  102                               ; Linux page memory size (4096 bytes)
 

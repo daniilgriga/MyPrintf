@@ -466,35 +466,27 @@
    342                                  
    343                                  section .data
    344                                  
-   345                                  ASCII_NULL      equ  "0"
-   346                                  ASCII_NINE      equ  "9"
-   347                                  ASCII_A         equ  "A"
-   348                                  ASCII_F         equ  "F"
-   349                                  ASCII_SPACE     equ  " "
-   350                                  ASCII_SL_N      equ  0Ah
-   351                                  ASCII_SL_R      equ  0Dh
-   352                                  
-   353                                  BUFFER_SIZE     equ  102                               ; Linux page memory size (4096 bytes)
-   354                                  
-   355 00000000 53796E746178206572-     ErrorMessage    db      "Syntax error!", 0xA
-   355 00000009 726F72210A         
-   356                                  ErrorMessageLen equ      $ - ErrorMessage
-   357                                  
-   358 0000000E 303132333435363738-     digits:         db      "0123456789abcdef"
-   358 00000017 39616263646566     
-   359 0000001E 00<rep 66h>             buffer          times   BUFFER_SIZE  db  0              ; BUFFER_SIZE times 0 byte
-   360 00000084 0000000000000000        buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
-   361                                  
-   362                                  jump_table:
-   363 0000008C [FB00000000000000]                              dq Binary
-   364 00000094 [2201000000000000]                              dq Char
-   365 0000009C [5C01000000000000]                              dq Decimal
-   366 000000A4 [CE00000000000000]-      times ('o' - 'd' - 1)  dq Error
-   366 000000A4 <rep Ah>           
-   367 000000F4 [7E01000000000000]                              dq Octal
-   368 000000FC [CE00000000000000]-      times ('s' - 'o' - 1)  dq Error
-   368 000000FC <rep 3h>           
-   369 00000114 [CC01000000000000]                              dq String
-   370 0000011C [CE00000000000000]-      times ('x' - 's' - 1)  dq Error
-   370 0000011C <rep 4h>           
-   371 0000013C [A501000000000000]                              dq Hexademical
+   345                                  BUFFER_SIZE     equ  102                               ; Linux page memory size (4096 bytes)
+   346                                  
+   347 00000000 53796E746178206572-     ErrorMessage    db      "Syntax error!", 0xA
+   347 00000009 726F72210A         
+   348                                  ErrorMessageLen equ      $ - ErrorMessage
+   349                                  
+   350 0000000E 303132333435363738-     digits:         db      "0123456789abcdef"
+   350 00000017 39616263646566     
+   351 0000001E 00<rep 66h>             buffer          times   BUFFER_SIZE  db  0              ; BUFFER_SIZE times 0 byte
+   352 00000084 0000000000000000        buf_position:   dq      0                               ; 8 byte (to match the size of the registers)
+   353                                  
+   354                                  jump_table:
+   355 0000008C [FB00000000000000]                              dq Binary
+   356 00000094 [2201000000000000]                              dq Char
+   357 0000009C [5C01000000000000]                              dq Decimal
+   358 000000A4 [CE00000000000000]-      times ('o' - 'd' - 1)  dq Error
+   358 000000A4 <rep Ah>           
+   359 000000F4 [7E01000000000000]                              dq Octal
+   360 000000FC [CE00000000000000]-      times ('s' - 'o' - 1)  dq Error
+   360 000000FC <rep 3h>           
+   361 00000114 [CC01000000000000]                              dq String
+   362 0000011C [CE00000000000000]-      times ('x' - 's' - 1)  dq Error
+   362 0000011C <rep 4h>           
+   363 0000013C [A501000000000000]                              dq Hexademical
