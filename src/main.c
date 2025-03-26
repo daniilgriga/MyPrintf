@@ -2,7 +2,7 @@
 
 #include "color_print.h"
 
-extern int MyPrintf (const char* a, ...);
+extern int MyPrintf (const char* format, ...);
 
 int main (void)
 {
